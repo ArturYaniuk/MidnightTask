@@ -1,0 +1,14 @@
+{
+	"Targets": [
+		{
+			"Name": "MidnightTask",
+			"Path": "..\\Source\\MidnightTask.Target.cs",
+			"Type": "Game"
+		},
+		{
+			"Name": "MidnightTaskEditor",
+			"Path": "..\\Source\\MidnightTaskEditor.Target.cs",
+			"Type": "Editor"
+		}
+	]
+}

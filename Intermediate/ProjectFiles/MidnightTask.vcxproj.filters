@@ -1,0 +1,57 @@
+<?xml version="1.0" encoding="utf-8"?>
+<Project ToolsVersion="17.0" xmlns="http://schemas.microsoft.com/developer/msbuild/2003">
+  <ItemGroup>
+    <None Include="..\..\MidnightTask.uproject" />
+    <Filter Include="Source">
+      <UniqueIdentifier>{F31BBDD1-B3E8-3BCC-9652-680E16935819}</UniqueIdentifier>
+    </Filter>
+    <None Include="..\..\Source\MidnightTask.Target.cs">
+      <Filter>Source</Filter>
+    </None>
+    <None Include="..\..\Source\MidnightTaskEditor.Target.cs">
+      <Filter>Source</Filter>
+    </None>
+    <Filter Include="Config">
+      <UniqueIdentifier>{FA535FFB-25E1-3D20-B416-52F9BE21E06E}</UniqueIdentifier>
+    </Filter>
+    <None Include="..\..\Config\DefaultEditor.ini">
+      <Filter>Config</Filter>
+    </None>
+    <None Include="..\..\Config\DefaultEditorPerProjectUserSettings.ini">
+      <Filter>Config</Filter>
+    </None>
+    <None Include="..\..\Config\DefaultEngine.ini">
+      <Filter>Config</Filter>
+    </None>
+    <None Include="..\..\Config\DefaultGame.ini">
+      <Filter>Config</Filter>
+    </None>
+    <None Include="..\..\Config\DefaultInput.ini">
+      <Filter>Config</Filter>
+    </None>
+    <Filter Include="Source\MidnightTask">
+      <UniqueIdentifier>{46BC7940-9C09-3D30-A338-4EBCBE85F1DC}</UniqueIdentifier>
+    </Filter>
+    <None Include="..\..\Source\MidnightTask\MidnightTask.Build.cs">
+      <Filter>Source\MidnightTask</Filter>
+    </None>
+    <ClCompile Include="..\..\Source\MidnightTask\MidnightTask.cpp">
+      <Filter>Source\MidnightTask</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\Source\MidnightTask\MidnightTask.h">
+      <Filter>Source\MidnightTask</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\Source\MidnightTask\MidnightTaskCharacter.cpp">
+      <Filter>Source\MidnightTask</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\Source\MidnightTask\MidnightTaskCharacter.h">
+      <Filter>Source\MidnightTask</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\Source\MidnightTask\MidnightTaskGameMode.cpp">
+      <Filter>Source\MidnightTask</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\Source\MidnightTask\MidnightTaskGameMode.h">
+      <Filter>Source\MidnightTask</Filter>
+    </ClCompile>
+  </ItemGroup>
+</Project>
