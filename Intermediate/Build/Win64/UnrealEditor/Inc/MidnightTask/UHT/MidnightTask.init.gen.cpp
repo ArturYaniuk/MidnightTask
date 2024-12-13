@@ -17,7 +17,7 @@ void EmptyLinkFunctionForGeneratedCodeMidnightTask_init() {}
 				nullptr,
 				0,
 				PKG_CompiledIn | 0x00000000,
-				0xDEB8DD76,
+				0xCA95EA0B,
 				0x49D182AE,
 				METADATA_PARAMS(0, nullptr)
 			};
@@ -25,5 +25,5 @@ void EmptyLinkFunctionForGeneratedCodeMidnightTask_init() {}
 		}
 		return Z_Registration_Info_UPackage__Script_MidnightTask.OuterSingleton;
 	}
-	static FRegisterCompiledInInfo Z_CompiledInDeferPackage_UPackage__Script_MidnightTask(Z_Construct_UPackage__Script_MidnightTask, TEXT("/Script/MidnightTask"), Z_Registration_Info_UPackage__Script_MidnightTask, CONSTRUCT_RELOAD_VERSION_INFO(FPackageReloadVersionInfo, 0xDEB8DD76, 0x49D182AE));
+	static FRegisterCompiledInInfo Z_CompiledInDeferPackage_UPackage__Script_MidnightTask(Z_Construct_UPackage__Script_MidnightTask, TEXT("/Script/MidnightTask"), Z_Registration_Info_UPackage__Script_MidnightTask, CONSTRUCT_RELOAD_VERSION_INFO(FPackageReloadVersionInfo, 0xCA95EA0B, 0x49D182AE));
 PRAGMA_ENABLE_DEPRECATION_WARNINGS

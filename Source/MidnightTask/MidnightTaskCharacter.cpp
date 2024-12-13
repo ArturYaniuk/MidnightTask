@@ -26,6 +26,13 @@ AMidnightTaskCharacter::AMidnightTaskCharacter()
 	bUseControllerRotationYaw = false;
 	bUseControllerRotationRoll = false;
 
+	//Wall run gravity values
+	WallRunGravityScale = 0.65f;
+	DefaultGravityScale = 1.8f;
+	WallJumpForce = 450.0f;
+	WallRunRange = 40.0f;
+
+
 	// Configure character movement
 	GetCharacterMovement()->bOrientRotationToMovement = true; // Character moves in the direction of input...	
 	GetCharacterMovement()->RotationRate = FRotator(0.0f, 500.0f, 0.0f); // ...at this rotation rate
@@ -92,6 +99,71 @@ void AMidnightTaskCharacter::SetupPlayerInputComponent(UInputComponent* PlayerIn
 	}
 }
 
+void AMidnightTaskCharacter::Tick(float DeltaSeconds)
+{
+	if (GetCharacterMovement()->IsFalling() && bHoldingJump)
+	{
+		FHitResult HitOutR = CheckWall(true);
+		FHitResult HitOutL = CheckWall(false);
+
+		if (WallHit.bBlockingHit) PreviousWallHitNormal = WallHit.ImpactNormal;
+
+		WallHit = HitOutR.Distance >= HitOutL.Distance ? HitOutR : HitOutL;
+		
+		if (HitOutR.Distance >= HitOutL.Distance) RightWall = true;
+		else RightWall = false;
+	
+		if (WallHit.bBlockingHit && !bWallRunning) ToggleWallRun(true);
+		else if (!WallHit.bBlockingHit && bWallRunning)	ToggleWallRun(false);
+		
+	}
+	else if (bWallRunning)
+	{
+		ToggleWallRun(false);
+	}
+
+	Super::Tick(DeltaSeconds);
+}
+
+void AMidnightTaskCharacter::Jump()
+{
+	bHoldingJump = true;
+
+	Super::Jump();
+}
+
+void AMidnightTaskCharacter::StopJumping()
+{
+	//If the player is wall running when jump is released, perform a leap from the wall
+	if (bWallRunning)
+	{
+		FVector LaunchVector = WallHit.ImpactNormal;
+		LaunchVector.Normalize();
+
+		LaunchVector = (LaunchVector + (GetActorUpVector() * 1.0)) / 2;
+
+		LaunchCharacter(LaunchVector * WallJumpForce, false, false);
+
+		if (CheckWall(true).Distance >= CheckWall(true).Distance) PlayJumpMontage(WallJump, "Right");
+		else PlayJumpMontage(WallJump, "Left");
+	}
+
+	bHoldingJump = false;
+
+	Super::StopJumping();
+}
+
+void AMidnightTaskCharacter::PlayJumpMontage(UAnimMontage* Montage, FName JumpSide)
+{
+	UAnimInstance* AnimInstance = GetMesh()->GetAnimInstance();
+
+	if (AnimInstance && Montage)
+	{
+		AnimInstance->Montage_Play(Montage);
+		AnimInstance->Montage_JumpToSection(JumpSide);
+	}
+}
+
 void AMidnightTaskCharacter::Move(const FInputActionValue& Value)
 {
 	// input is a Vector2D
@@ -111,7 +183,7 @@ void AMidnightTaskCharacter::Move(const FInputActionValue& Value)
 
 		// add movement 
 		AddMovementInput(ForwardDirection, MovementVector.Y);
-		AddMovementInput(RightDirection, MovementVector.X);
+		if(!bWallRunning)AddMovementInput(RightDirection, MovementVector.X);
 	}
 }
 
@@ -127,3 +199,62 @@ void AMidnightTaskCharacter::Look(const FInputActionValue& Value)
 		AddControllerPitchInput(LookAxisVector.Y);
 	}
 }
+
+FHitResult AMidnightTaskCharacter::CheckWall(bool bRight)
+{
+	const FName TraceTag("WallTraceTag");
+
+	FCollisionQueryParams TraceParams = FCollisionQueryParams(TraceTag, true, this);
+	TraceParams.bTraceComplex = true;
+	TraceParams.bReturnPhysicalMaterial = false;
+	TraceParams.bFindInitialOverlaps = true;
+
+	FHitResult HitOut(ForceInit);
+
+	float DirectionMultiplier = bRight ? WallRunRange : -1.0f * WallRunRange;
+	FVector End = GetActorLocation() + (GetActorForwardVector() * GetCapsuleComponent()->GetScaledCapsuleRadius()) + (GetActorRightVector() * DirectionMultiplier);
+
+	FCollisionShape TraceShape = FCollisionShape::MakeSphere(30.0f);
+
+	GetWorld()->SweepSingleByChannel(
+		HitOut,
+		GetActorLocation(),
+		End,
+		GetActorRotation().Quaternion(),
+		ECollisionChannel::ECC_Visibility,
+		TraceShape,
+		TraceParams
+	);
+
+	return HitOut;
+}
+
+void AMidnightTaskCharacter::ToggleWallRun(bool bEnable)
+{
+	if (bEnable)
+	{
+		GetCharacterMovement()->GravityScale = WallRunGravityScale;
+
+		APlayerController* PC = Cast<APlayerController>(GetController());
+		PC->PlayerCameraManager->ViewPitchMax = 20.0f;
+		PC->PlayerCameraManager->ViewPitchMin = -20.0f;
+
+		if (FVector::DotProduct(GetActorUpVector(), GetVelocity() / GetVelocity().Size()) < 0.0f && PreviousWallHitNormal != WallHit.ImpactNormal)
+		{
+			LaunchCharacter(GetActorUpVector() * 100.0f, false, true);
+		}
+
+		bWallRunning = true;
+	}
+	else
+	{
+		GetCharacterMovement()->GravityScale = DefaultGravityScale;
+
+		APlayerController* PC = Cast<APlayerController>(GetController());
+		PC->PlayerCameraManager->ViewPitchMax = 89.900002;
+		PC->PlayerCameraManager->ViewPitchMin = -89.900002;
+
+		bWallRunning = false;
+	}
+}
+
