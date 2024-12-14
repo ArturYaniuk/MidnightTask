@@ -5,6 +5,8 @@
 #include "CoreMinimal.h"
 #include "GameFramework/Character.h"
 #include "Logging/LogMacros.h"
+#include "ActorComponents/CombatState.h"
+#include "Items/Weapon.h"
 #include "MidnightTaskCharacter.generated.h"
 
 class USpringArmComponent;
@@ -103,6 +105,9 @@ public:
 	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = Sliding)
 	float SlideReloadTime = 5.0f;
 
+	virtual float TakeDamage(float DamageAmount, struct FDamageEvent const& DamageEvent, class AController* EventInstigator, AActor* DamageCauser) override;
+
+
 
 private:
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = Combat, meta = (AllowPrivateAccess = "true"))
@@ -121,6 +126,55 @@ private:
 
 	UPROPERTY(VisibleInstanceOnly)
 	AItem* OverlappingItem;
+
+	UPROPERTY(VisibleAnywhere)
+	class UHealthComponent* HealthComponent;
+
+	UPROPERTY(VisibleAnywhere)
+	class UAttackComponent* AttackComponent;
+
+	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = Combat, meta = (AllowPrivateAccess = "true"))
+	ECombatState CombatState;
+
+	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = Combat, meta = (AllowPrivateAccess = "true"))
+	AItem* TraceHitItem;
+
+	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = Items, meta = (AllowPrivateAccess = "true"))
+	AItem* TraceHitItemLastFrame;
+
+	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = Inventory, meta = (AllowPrivateAccess = "true"))
+	TArray<AItem*> Inventory;
+
+	const int32 INVENTORY_CAPACITY{ 2 };
+
+	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = Character, meta = (AllowPrivateAccess = "true"))
+	bool bAiming;
+
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = Combat, meta = (AllowPrivateAccess = "true"))
+	UAnimMontage* ReloadMontage;
+
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = Combat, meta = (AllowPrivateAccess = "true"))
+	UAnimMontage* EquipMontage;
+
+	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = Combat, meta = (AllowPrivateAccess = "true"))
+	AWeapon* EquippedWeapon;
+
+	bool bShouldTraceForItems;
+
+	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = Items, meta = (AllowPrivateAccess = "true"))
+	bool bFireButtonPressed;
+
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = Combat, meta = (AllowPrivateAccess = "true"))
+	UAnimMontage* HipFireMontage;
+
+	FTimerHandle AutoFireTimer;
+
+	FTimerHandle isPocketReloading;
+
+	AWeapon* OldEquippedWeapon;
+
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = Combat, meta = (AllowPrivateAccess = "true"))
+	int32 AmmoCapacity;
 
 protected:
 
@@ -149,6 +203,9 @@ protected:
 
 	void ResetSlideTime();
 
+	void EKeyPressed();
+	void EKeyReleased();
+
 protected:
 
 	virtual void NotifyControllerChanged() override;
@@ -162,6 +219,47 @@ protected:
 
 	void PlayJumpMontage(UAnimMontage* Montage, FName JumpSide);
 
+	void GetPickupItem(AItem* Item);
+
+	void EquipOrSwap(AWeapon* WeaponToEquip);
+
+	void PlayEquipMontage(UAnimMontage* Montage);
+
+	void StopAiming();
+
+	void EquipWeapon(AWeapon* WeaponToEquip);
+
+	void SwapWeapon(AWeapon* WeaponToSwap);
+
+	void DropWeapon();
+
+	void TraceForItems();
+
+	bool TraceUnderCrosshairs(FHitResult& OutHitResult, FVector& OutHitLocation);
+
+	void FireButtonPressed();
+
+	void FireButtonReleased();
+
+	void FireWeapon();
+
+	bool WeaponHasAmmo(AWeapon* Weapon);
+
+	void PlayFireSound();
+
+	void PlayGunFireMontage();
+
+	void StartFireTimer();
+
+	void AutoFireReset();
+
+	void ReloadWeapon(AWeapon* Weapon, bool pocketReload = false);
+
+	void StartPocketReload();
+
+	void FinishReloading(AWeapon* Weapon);
+
+	
 
 public:
 	/** Returns CameraBoom subobject **/

@@ -73,21 +73,8 @@ private:
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Projectile Properties", meta = (AllowPrivateAccess = "true"))
 	float ImpactImpulse;
 
-	float Damage;
-
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Projectile Properties", meta = (AllowPrivateAccess = "true"))
 	float HitDamage;
-
-	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Projectile Properties", meta = (AllowPrivateAccess = "true"))
-	float CritDamage;
-
-	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Projectile Properties", meta = (AllowPrivateAccess = "true"))
-	float WeaponDamageMultiplier;
-
-	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Projectile Properties", meta = (AllowPrivateAccess = "true"))
-	float WeaponCritDamageMultiplier;
-
-	FString CritBone;
 
 public:
 	FORCEINLINE float GetDamage() { return HitDamage; }

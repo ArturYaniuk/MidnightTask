@@ -17,10 +17,7 @@ AProjectile::AProjectile() :
 	GravityScale(0.5f),
 	LifeSpan(3.0f),
 	ImpactImpulse(100.0f),
-	HitDamage(1.0f),
-	CritDamage(3.0f),
-	WeaponDamageMultiplier(1.0f),
-	WeaponCritDamageMultiplier(1.5f)
+	HitDamage(1.0f)
 {
 	PrimaryActorTick.bCanEverTick = true;
 
@@ -77,12 +74,10 @@ void AProjectile::OnHit(UPrimitiveComponent* HitComponent, AActor* OtherActor, U
 		auto HitEnemy = Cast<APawn>(OtherActor);
 		if (HitEnemy)
 		{
-			Damage = HitDamage * WeaponDamageMultiplier;
-			
 
 			UGameplayStatics::ApplyDamage(
 				OtherActor,
-				Damage,
+				HitDamage,
 				HitEnemy->GetController(),
 				Owner,
 				UDamageType::StaticClass());

@@ -115,4 +115,9 @@
       <Filter>Source\MidnightTask\Public\Items</Filter>
     </ClCompile>
   </ItemGroup>
+  <ItemGroup>
+    <ClInclude Include="..\..\Source\MidnightTask\Public\ActorComponents\CombatState.h">
+      <Filter>Source\MidnightTask\Public\ActorComponents</Filter>
+    </ClInclude>
+  </ItemGroup>
 </Project>
