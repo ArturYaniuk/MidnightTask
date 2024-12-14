@@ -11,6 +11,10 @@
     <None Include="..\..\Source\MidnightTaskEditor.Target.cs">
       <Filter>Source</Filter>
     </None>
+    <None Include="..\..\.gitattributes" />
+    <None Include="..\..\.gitignore" />
+    <None Include="..\..\.vsconfig" />
+    <None Include="..\..\README.md" />
     <Filter Include="Config">
       <UniqueIdentifier>{FA535FFB-25E1-3D20-B416-52F9BE21E06E}</UniqueIdentifier>
     </Filter>
@@ -35,23 +39,29 @@
     <None Include="..\..\Source\MidnightTask\MidnightTask.Build.cs">
       <Filter>Source\MidnightTask</Filter>
     </None>
-    <ClCompile Include="..\..\Source\MidnightTask\MidnightTask.cpp">
-      <Filter>Source\MidnightTask</Filter>
+    <Filter Include="Source\MidnightTask\Private">
+      <UniqueIdentifier>{FF120809-087A-32A9-96C4-528541221E4F}</UniqueIdentifier>
+    </Filter>
+    <ClCompile Include="..\..\Source\MidnightTask\Private\MidnightTask.cpp">
+      <Filter>Source\MidnightTask\Private</Filter>
     </ClCompile>
-    <ClCompile Include="..\..\Source\MidnightTask\MidnightTask.h">
-      <Filter>Source\MidnightTask</Filter>
+    <ClCompile Include="..\..\Source\MidnightTask\Private\MidnightTaskCharacter.cpp">
+      <Filter>Source\MidnightTask\Private</Filter>
     </ClCompile>
-    <ClCompile Include="..\..\Source\MidnightTask\MidnightTaskCharacter.cpp">
-      <Filter>Source\MidnightTask</Filter>
+    <ClCompile Include="..\..\Source\MidnightTask\Private\TaskCharacterMovementComponent.cpp">
+      <Filter>Source\MidnightTask\Private</Filter>
     </ClCompile>
-    <ClCompile Include="..\..\Source\MidnightTask\MidnightTaskCharacter.h">
-      <Filter>Source\MidnightTask</Filter>
+    <Filter Include="Source\MidnightTask\Public">
+      <UniqueIdentifier>{6F789F8D-6253-3D2A-B222-9F8B3D2A2222}</UniqueIdentifier>
+    </Filter>
+    <ClCompile Include="..\..\Source\MidnightTask\Public\MidnightTask.h">
+      <Filter>Source\MidnightTask\Public</Filter>
     </ClCompile>
-    <ClCompile Include="..\..\Source\MidnightTask\MidnightTaskGameMode.cpp">
-      <Filter>Source\MidnightTask</Filter>
+    <ClCompile Include="..\..\Source\MidnightTask\Public\MidnightTaskCharacter.h">
+      <Filter>Source\MidnightTask\Public</Filter>
     </ClCompile>
-    <ClCompile Include="..\..\Source\MidnightTask\MidnightTaskGameMode.h">
-      <Filter>Source\MidnightTask</Filter>
+    <ClCompile Include="..\..\Source\MidnightTask\Public\TaskCharacterMovementComponent.h">
+      <Filter>Source\MidnightTask\Public</Filter>
     </ClCompile>
   </ItemGroup>
 </Project>
