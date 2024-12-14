@@ -20,6 +20,7 @@ ENGINE_API UClass* Z_Construct_UClass_USpringArmComponent_NoRegister();
 ENGINE_API UScriptStruct* Z_Construct_UScriptStruct_FHitResult();
 ENHANCEDINPUT_API UClass* Z_Construct_UClass_UInputAction_NoRegister();
 ENHANCEDINPUT_API UClass* Z_Construct_UClass_UInputMappingContext_NoRegister();
+MIDNIGHTTASK_API UClass* Z_Construct_UClass_AItem_NoRegister();
 MIDNIGHTTASK_API UClass* Z_Construct_UClass_AMidnightTaskCharacter();
 MIDNIGHTTASK_API UClass* Z_Construct_UClass_AMidnightTaskCharacter_NoRegister();
 MIDNIGHTTASK_API UClass* Z_Construct_UClass_UTaskCharacterMovementComponent_NoRegister();
@@ -288,6 +289,15 @@ struct Z_Construct_UClass_AMidnightTaskCharacter_Statics
 		{ "Category", "Combat" },
 		{ "ModuleRelativePath", "Public/MidnightTaskCharacter.h" },
 	};
+	static constexpr UECodeGen_Private::FMetaDataPairParam NewProp_EquipSoundResetTime_MetaData[] = {
+		{ "AllowPrivateAccess", "true" },
+		{ "Category", "Items" },
+		{ "ModuleRelativePath", "Public/MidnightTaskCharacter.h" },
+	};
+	static constexpr UECodeGen_Private::FMetaDataPairParam NewProp_OverlappingItem_MetaData[] = {
+		{ "Category", "MidnightTaskCharacter" },
+		{ "ModuleRelativePath", "Public/MidnightTaskCharacter.h" },
+	};
 #endif // WITH_METADATA
 	static const UECodeGen_Private::FObjectPropertyParams NewProp_CameraBoom;
 	static const UECodeGen_Private::FObjectPropertyParams NewProp_FollowCamera;
@@ -314,6 +324,8 @@ struct Z_Construct_UClass_AMidnightTaskCharacter_Statics
 	static const UECodeGen_Private::FBoolPropertyParams NewProp_isSliding;
 	static const UECodeGen_Private::FFloatPropertyParams NewProp_SlideReloadTime;
 	static const UECodeGen_Private::FObjectPropertyParams NewProp_WallJump;
+	static const UECodeGen_Private::FFloatPropertyParams NewProp_EquipSoundResetTime;
+	static const UECodeGen_Private::FObjectPropertyParams NewProp_OverlappingItem;
 	static const UECodeGen_Private::FPropertyParamsBase* const PropPointers[];
 	static UObject* (*const DependentSingletons[])();
 	static constexpr FClassFunctionLinkInfo FuncInfo[] = {
@@ -362,6 +374,8 @@ void Z_Construct_UClass_AMidnightTaskCharacter_Statics::NewProp_isSliding_SetBit
 const UECodeGen_Private::FBoolPropertyParams Z_Construct_UClass_AMidnightTaskCharacter_Statics::NewProp_isSliding = { "isSliding", nullptr, (EPropertyFlags)0x0010000000020015, UECodeGen_Private::EPropertyGenFlags::Bool | UECodeGen_Private::EPropertyGenFlags::NativeBool, RF_Public|RF_Transient|RF_MarkAsNative, nullptr, nullptr, 1, sizeof(bool), sizeof(AMidnightTaskCharacter), &Z_Construct_UClass_AMidnightTaskCharacter_Statics::NewProp_isSliding_SetBit, METADATA_PARAMS(UE_ARRAY_COUNT(NewProp_isSliding_MetaData), NewProp_isSliding_MetaData) };
 const UECodeGen_Private::FFloatPropertyParams Z_Construct_UClass_AMidnightTaskCharacter_Statics::NewProp_SlideReloadTime = { "SlideReloadTime", nullptr, (EPropertyFlags)0x0010000000020015, UECodeGen_Private::EPropertyGenFlags::Float, RF_Public|RF_Transient|RF_MarkAsNative, nullptr, nullptr, 1, STRUCT_OFFSET(AMidnightTaskCharacter, SlideReloadTime), METADATA_PARAMS(UE_ARRAY_COUNT(NewProp_SlideReloadTime_MetaData), NewProp_SlideReloadTime_MetaData) };
 const UECodeGen_Private::FObjectPropertyParams Z_Construct_UClass_AMidnightTaskCharacter_Statics::NewProp_WallJump = { "WallJump", nullptr, (EPropertyFlags)0x0040000000000005, UECodeGen_Private::EPropertyGenFlags::Object, RF_Public|RF_Transient|RF_MarkAsNative, nullptr, nullptr, 1, STRUCT_OFFSET(AMidnightTaskCharacter, WallJump), Z_Construct_UClass_UAnimMontage_NoRegister, METADATA_PARAMS(UE_ARRAY_COUNT(NewProp_WallJump_MetaData), NewProp_WallJump_MetaData) };
+const UECodeGen_Private::FFloatPropertyParams Z_Construct_UClass_AMidnightTaskCharacter_Statics::NewProp_EquipSoundResetTime = { "EquipSoundResetTime", nullptr, (EPropertyFlags)0x0040000000000015, UECodeGen_Private::EPropertyGenFlags::Float, RF_Public|RF_Transient|RF_MarkAsNative, nullptr, nullptr, 1, STRUCT_OFFSET(AMidnightTaskCharacter, EquipSoundResetTime), METADATA_PARAMS(UE_ARRAY_COUNT(NewProp_EquipSoundResetTime_MetaData), NewProp_EquipSoundResetTime_MetaData) };
+const UECodeGen_Private::FObjectPropertyParams Z_Construct_UClass_AMidnightTaskCharacter_Statics::NewProp_OverlappingItem = { "OverlappingItem", nullptr, (EPropertyFlags)0x0040000000020801, UECodeGen_Private::EPropertyGenFlags::Object, RF_Public|RF_Transient|RF_MarkAsNative, nullptr, nullptr, 1, STRUCT_OFFSET(AMidnightTaskCharacter, OverlappingItem), Z_Construct_UClass_AItem_NoRegister, METADATA_PARAMS(UE_ARRAY_COUNT(NewProp_OverlappingItem_MetaData), NewProp_OverlappingItem_MetaData) };
 const UECodeGen_Private::FPropertyParamsBase* const Z_Construct_UClass_AMidnightTaskCharacter_Statics::PropPointers[] = {
 	(const UECodeGen_Private::FPropertyParamsBase*)&Z_Construct_UClass_AMidnightTaskCharacter_Statics::NewProp_CameraBoom,
 	(const UECodeGen_Private::FPropertyParamsBase*)&Z_Construct_UClass_AMidnightTaskCharacter_Statics::NewProp_FollowCamera,
@@ -384,6 +398,8 @@ const UECodeGen_Private::FPropertyParamsBase* const Z_Construct_UClass_AMidnight
 	(const UECodeGen_Private::FPropertyParamsBase*)&Z_Construct_UClass_AMidnightTaskCharacter_Statics::NewProp_isSliding,
 	(const UECodeGen_Private::FPropertyParamsBase*)&Z_Construct_UClass_AMidnightTaskCharacter_Statics::NewProp_SlideReloadTime,
 	(const UECodeGen_Private::FPropertyParamsBase*)&Z_Construct_UClass_AMidnightTaskCharacter_Statics::NewProp_WallJump,
+	(const UECodeGen_Private::FPropertyParamsBase*)&Z_Construct_UClass_AMidnightTaskCharacter_Statics::NewProp_EquipSoundResetTime,
+	(const UECodeGen_Private::FPropertyParamsBase*)&Z_Construct_UClass_AMidnightTaskCharacter_Statics::NewProp_OverlappingItem,
 };
 static_assert(UE_ARRAY_COUNT(Z_Construct_UClass_AMidnightTaskCharacter_Statics::PropPointers) < 2048);
 UObject* (*const Z_Construct_UClass_AMidnightTaskCharacter_Statics::DependentSingletons[])() = {
@@ -426,10 +442,10 @@ AMidnightTaskCharacter::~AMidnightTaskCharacter() {}
 struct Z_CompiledInDeferFile_FID_Files_My_Works_UE_works_MidnightTask_Source_MidnightTask_Public_MidnightTaskCharacter_h_Statics
 {
 	static constexpr FClassRegisterCompiledInInfo ClassInfo[] = {
-		{ Z_Construct_UClass_AMidnightTaskCharacter, AMidnightTaskCharacter::StaticClass, TEXT("AMidnightTaskCharacter"), &Z_Registration_Info_UClass_AMidnightTaskCharacter, CONSTRUCT_RELOAD_VERSION_INFO(FClassReloadVersionInfo, sizeof(AMidnightTaskCharacter), 3115949793U) },
+		{ Z_Construct_UClass_AMidnightTaskCharacter, AMidnightTaskCharacter::StaticClass, TEXT("AMidnightTaskCharacter"), &Z_Registration_Info_UClass_AMidnightTaskCharacter, CONSTRUCT_RELOAD_VERSION_INFO(FClassReloadVersionInfo, sizeof(AMidnightTaskCharacter), 525576621U) },
 	};
 };
-static FRegisterCompiledInInfo Z_CompiledInDeferFile_FID_Files_My_Works_UE_works_MidnightTask_Source_MidnightTask_Public_MidnightTaskCharacter_h_2205519979(TEXT("/Script/MidnightTask"),
+static FRegisterCompiledInInfo Z_CompiledInDeferFile_FID_Files_My_Works_UE_works_MidnightTask_Source_MidnightTask_Public_MidnightTaskCharacter_h_1930597924(TEXT("/Script/MidnightTask"),
 	Z_CompiledInDeferFile_FID_Files_My_Works_UE_works_MidnightTask_Source_MidnightTask_Public_MidnightTaskCharacter_h_Statics::ClassInfo, UE_ARRAY_COUNT(Z_CompiledInDeferFile_FID_Files_My_Works_UE_works_MidnightTask_Source_MidnightTask_Public_MidnightTaskCharacter_h_Statics::ClassInfo),
 	nullptr, 0,
 	nullptr, 0);

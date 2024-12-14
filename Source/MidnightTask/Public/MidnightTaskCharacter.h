@@ -11,12 +11,13 @@ class USpringArmComponent;
 class UCameraComponent;
 class UInputMappingContext;
 class UInputAction;
+class AItem;
 struct FInputActionValue;
 
 DECLARE_LOG_CATEGORY_EXTERN(LogTemplateCharacter, Log, All);
 
 UCLASS(config=Game)
-class AMidnightTaskCharacter : public ACharacter
+class AMidnightTaskCharacter : public ACharacter 
 {
 	GENERATED_BODY()
 
@@ -109,6 +110,18 @@ private:
 
 	FTimerHandle SlideTimer;
 
+	FTimerHandle EquipSoundTimer;
+
+	bool bShouldPlayEquipSound = true;
+
+	void ResetEquipSoundTimer();
+
+	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = Items, meta = (AllowPrivateAccess = "true"))
+	float EquipSoundResetTime = 0.2f;
+
+	UPROPERTY(VisibleInstanceOnly)
+	AItem* OverlappingItem;
+
 protected:
 
 	/** Called for movement input */
@@ -159,6 +172,10 @@ public:
 	UFUNCTION(BlueprintPure)
 	FORCEINLINE UTaskCharacterMovementComponent* GetCustomCharacterMovement() const { return MovementComponent; }
 
+	void StartEquipSoundTimer();
+
+	FORCEINLINE bool ShouldPlayEquipSound() const { return bShouldPlayEquipSound; }
+	FORCEINLINE void SetOverlappingItem(AItem* Item) { OverlappingItem = Item; }
 
 };
 

@@ -173,6 +173,17 @@ void AMidnightTaskCharacter::PlayJumpMontage(UAnimMontage* Montage, FName JumpSi
 	}
 }
 
+void AMidnightTaskCharacter::StartEquipSoundTimer()
+{
+	bShouldPlayEquipSound = false;
+	GetWorldTimerManager().SetTimer(EquipSoundTimer, this, &AMidnightTaskCharacter::ResetEquipSoundTimer, EquipSoundResetTime);
+}
+
+void AMidnightTaskCharacter::ResetEquipSoundTimer()
+{
+	bShouldPlayEquipSound = true;
+}
+
 void AMidnightTaskCharacter::Move(const FInputActionValue& Value)
 {
 	// input is a Vector2D
