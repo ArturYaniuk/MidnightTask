@@ -65,6 +65,7 @@ bool UTaskCharacterMovementComponent::CanStartClimbing()
 
 		if (HorizontalDegrees <= MinHorizontalDegreesToStartClimbing &&	!bIsCeiling && IsFacingSurface(VerticalDot)) 
 		{
+			if (GEngine) GEngine->AddOnScreenDebugMessage(1, 4, FColor::Green, TEXT("CanStartClimbing"));
 			return true;
 		}
 	}
@@ -236,6 +237,13 @@ bool UTaskCharacterMovementComponent::CanMoveToLedgeClimbLocation() const
 
 void UTaskCharacterMovementComponent::ComputeSurfaceInfo()
 {
+	CurrentClimbingNormal = FVector::ZeroVector;
+	CurrentClimbingPosition = FVector::ZeroVector;
+
+	if (CurrentWallHits.IsEmpty())
+	{
+		return;
+	}
 
 	const FVector Start = UpdatedComponent->GetComponentLocation();
 	const FCollisionShape CollisionSphere = FCollisionShape::MakeSphere(6);
@@ -248,9 +256,13 @@ void UTaskCharacterMovementComponent::ComputeSurfaceInfo()
 		GetWorld()->SweepSingleByChannel(AssistHit, Start, End, FQuat::Identity,
 			ECC_WorldStatic, CollisionSphere, ClimbQueryParams);
 
-		CurrentClimbingPosition += AssistHit.ImpactPoint;
+		CurrentClimbingPosition += AssistHit.Location;
 		CurrentClimbingNormal += AssistHit.Normal;
 	}
+
+	CurrentClimbingPosition /= CurrentWallHits.Num();
+	CurrentClimbingNormal = CurrentClimbingNormal.GetSafeNormal();
+	
 }
 
 void UTaskCharacterMovementComponent::ComputeClimbingVelocity(float deltaTime)
@@ -273,6 +285,12 @@ bool UTaskCharacterMovementComponent::ShouldStopClimbing()
 {
 
 	const bool bIsOnCeiling = FVector::Parallel(CurrentClimbingNormal, FVector::UpVector);
+
+	if (GEngine) GEngine->AddOnScreenDebugMessage(2, 4, FColor::Red, FString::Printf(TEXT("bWantsToClimb: %d"), !bWantsToClimb));
+	if (GEngine) GEngine->AddOnScreenDebugMessage(3, 4, FColor::Red, FString::Printf(TEXT("CurrentClimbingNormal.IsZero(): %d"), CurrentClimbingNormal.IsZero()));
+	if (GEngine) GEngine->AddOnScreenDebugMessage(4, 4, FColor::Red, FString::Printf(TEXT("bIsOnCeiling: %d"), bIsOnCeiling));
+
+
 
 	return !bWantsToClimb || CurrentClimbingNormal.IsZero() || bIsOnCeiling;
 
