@@ -123,7 +123,9 @@ void AItem::OnSphereOverlap(UPrimitiveComponent* OverlappedComponent, AActor* Ot
 	AMidnightTaskCharacter* TaskCharacter = Cast<AMidnightTaskCharacter>(OtherActor);
 	if (TaskCharacter)
 	{
-		TaskCharacter->SetOverlappingItem(this);
+		TaskCharacter->SetOverlappingItem(this);	
+		TaskCharacter->IncrementOverlappedItemCount(1);
+
 	}
 
 }
@@ -134,6 +136,8 @@ void AItem::OnSphereEndOverlap(UPrimitiveComponent* OverlappedComponent, AActor*
 	if (TaskCharacter)
 	{
 		TaskCharacter->SetOverlappingItem(nullptr);
+		TaskCharacter->IncrementOverlappedItemCount(-1);
+
 	}
 }
 

@@ -6,7 +6,6 @@
 #include "GameFramework/Character.h"
 #include "Logging/LogMacros.h"
 #include "ActorComponents/CombatState.h"
-#include "Items/Weapon.h"
 #include "MidnightTaskCharacter.generated.h"
 
 class USpringArmComponent;
@@ -14,6 +13,7 @@ class UCameraComponent;
 class UInputMappingContext;
 class UInputAction;
 class AItem;
+class AWeapon;
 struct FInputActionValue;
 
 DECLARE_LOG_CATEGORY_EXTERN(LogTemplateCharacter, Log, All);
@@ -137,6 +137,9 @@ private:
 	ECombatState CombatState;
 
 	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = Combat, meta = (AllowPrivateAccess = "true"))
+	ECharacterState CharacterState;
+
+	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = Combat, meta = (AllowPrivateAccess = "true"))
 	AItem* TraceHitItem;
 
 	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = Items, meta = (AllowPrivateAccess = "true"))
@@ -175,6 +178,16 @@ private:
 
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = Combat, meta = (AllowPrivateAccess = "true"))
 	int32 AmmoCapacity;
+
+	/** Number of overlapped AItems */
+	int8 OverlappedItemCount;
+
+	// Scene component to attach to the Character's hand during reloading
+	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = Combat, meta = (AllowPrivateAccess = "true"))
+	USceneComponent* HandSceneComponent;
+
+	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = Combat, meta = (AllowPrivateAccess = "true"))
+	FTransform ClipTransform;
 
 protected:
 
@@ -257,8 +270,27 @@ protected:
 
 	void StartPocketReload();
 
+	UFUNCTION(BlueprintCallable)
 	void FinishReloading(AWeapon* Weapon);
 
+	UFUNCTION(BlueprintCallable)
+	void FinishEquipping();
+
+	void OneKeyPressed();
+
+	void TwoKeyPressed();
+
+	void ExchangeInventoryItem(int32 NewItemIndex);
+
+	void ExchangeWeapon(AWeapon* WeaponToExchange);
+
+	void ReloadButtonPressed();
+
+	UFUNCTION(BlueprintCallable)
+	void GrabClip();
+
+	UFUNCTION(BlueprintCallable)
+	void ReleaseClip();
 	
 
 public:
@@ -274,6 +306,8 @@ public:
 
 	FORCEINLINE bool ShouldPlayEquipSound() const { return bShouldPlayEquipSound; }
 	FORCEINLINE void SetOverlappingItem(AItem* Item) { OverlappingItem = Item; }
+
+	void IncrementOverlappedItemCount(int8 Amount);
 
 };
 

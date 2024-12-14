@@ -16,6 +16,9 @@
 #include "ActorComponents/AttackComponent.h"
 #include "ActorComponents/CombatState.h"
 #include "Items/Weapon.h"
+#include "Components/WidgetComponent.h"
+#include "Sound/SoundCue.h"
+
 
 DEFINE_LOG_CATEGORY(LogTemplateCharacter);
 
@@ -23,9 +26,11 @@ DEFINE_LOG_CATEGORY(LogTemplateCharacter);
 AMidnightTaskCharacter::AMidnightTaskCharacter(const FObjectInitializer& ObjectInitializer) : 
 	Super(ObjectInitializer.SetDefaultSubobjectClass<UTaskCharacterMovementComponent>(ACharacter::CharacterMovementComponentName)) ,
 	CombatState(ECombatState::ECS_Unoccupied),
+	CharacterState(ECharacterState::ECS_Unequipped),
 	bShouldTraceForItems(false),
 	bFireButtonPressed(false),
-	AmmoCapacity(100)
+	AmmoCapacity(100),
+	OverlappedItemCount(0)
 
 {
 	MovementComponent = Cast<UTaskCharacterMovementComponent>(GetCharacterMovement());
@@ -68,6 +73,8 @@ AMidnightTaskCharacter::AMidnightTaskCharacter(const FObjectInitializer& ObjectI
 	FollowCamera = CreateDefaultSubobject<UCameraComponent>(TEXT("FollowCamera"));
 	FollowCamera->SetupAttachment(CameraBoom, USpringArmComponent::SocketName); // Attach the camera to the end of the boom and let the boom adjust to match the controller orientation
 	FollowCamera->bUsePawnControlRotation = false; // Camera does not rotate relative to arm
+
+	HandSceneComponent = CreateDefaultSubobject<USceneComponent>(TEXT("HandSceneComp"));
 
 	HealthComponent = CreateDefaultSubobject<UHealthComponent>(TEXT("HealthComponent"));
 
@@ -119,6 +126,14 @@ void AMidnightTaskCharacter::SetupPlayerInputComponent(UInputComponent* PlayerIn
 		PlayerInputComponent->BindAction("Attack", IE_Released, this, &AMidnightTaskCharacter::FireButtonReleased);
 
 
+		PlayerInputComponent->BindAction("1Key", IE_Pressed, this, &AMidnightTaskCharacter::OneKeyPressed);
+		PlayerInputComponent->BindAction("2Key", IE_Pressed, this, &AMidnightTaskCharacter::TwoKeyPressed);
+
+		PlayerInputComponent->BindAction("ReloadButton", IE_Pressed, this, &AMidnightTaskCharacter::ReloadButtonPressed);
+
+
+
+
 	}
 	else
 	{
@@ -128,6 +143,8 @@ void AMidnightTaskCharacter::SetupPlayerInputComponent(UInputComponent* PlayerIn
 
 void AMidnightTaskCharacter::Tick(float DeltaSeconds)
 { 
+	Super::Tick(DeltaSeconds);
+
 	if (GetCharacterMovement()->IsFalling() && bHoldingJump)
 	{
 		FHitResult HitOutR = CheckWall(true);
@@ -148,8 +165,9 @@ void AMidnightTaskCharacter::Tick(float DeltaSeconds)
 	{
 		ToggleWallRun(false);
 	}
-	
-	Super::Tick(DeltaSeconds);
+
+	TraceForItems();
+
 }
 
 void AMidnightTaskCharacter::Jump()
@@ -255,6 +273,7 @@ void AMidnightTaskCharacter::EquipWeapon(AWeapon* WeaponToEquip)
 	
 	WeaponToEquip->Equip(GetMesh(), FName("RightHandSocket"));
 	EquippedWeapon = WeaponToEquip;
+	CharacterState = ECharacterState::ECS_EquipedFirstWeapon;
 	EquippedWeapon->SetItemState(EItemState::EIS_Equipped);
 	StopAiming();
 
@@ -307,6 +326,7 @@ void AMidnightTaskCharacter::TraceForItems()
 			if (TraceHitItem && TraceHitItem->GetItemState() == EItemState::EIS_Equipped)
 			{
 				TraceHitItem = nullptr;
+				return;
 			}
 
 			if (TraceHitItem && TraceHitItem->GetPickupWidget())
@@ -389,13 +409,12 @@ void AMidnightTaskCharacter::FireWeapon()
 			EquippedWeapon->GetItemMesh()->GetSocketByName("BarrelSocket"),
 			EquippedWeapon->GetItemMesh(),
 			EquippedWeapon->GetMuzzleFash(),
-			GetViewRotation().Vector(),
+			GetViewRotation().Vector());
 
 		PlayGunFireMontage();
 		EquippedWeapon->DecrementAmmo();
 
 		StartFireTimer();
-		StartCrosshairBulletFire();
 	}
 }
 
@@ -508,6 +527,106 @@ void AMidnightTaskCharacter::FinishReloading(AWeapon* Weapon)
 		AmmoCapacity -= MagEmptySpace;
 	}
 	
+}
+
+void AMidnightTaskCharacter::FinishEquipping()
+{
+	CombatState = ECombatState::ECS_Unoccupied;
+}
+
+void AMidnightTaskCharacter::OneKeyPressed()
+{
+	ExchangeInventoryItem(0);
+}
+
+void AMidnightTaskCharacter::TwoKeyPressed()
+{
+	ExchangeInventoryItem(1);
+}
+
+void AMidnightTaskCharacter::ExchangeInventoryItem(int32 NewItemIndex)
+{
+	if (NewItemIndex >= Inventory.Num()) return;
+
+	auto NewWeapon = Cast<AWeapon>(Inventory[NewItemIndex]);
+
+	if (EquippedWeapon == nullptr)
+	{
+		EquipWeapon(NewWeapon);
+		NewWeapon->SetItemState(EItemState::EIS_Equipped);
+		PlayEquipMontage(EquipMontage);
+		NewWeapon->PlayEquipSound(this, true);
+		return;
+	}
+
+	else if ((EquippedWeapon->GetSlotIndex() == NewItemIndex) || (Inventory[NewItemIndex] == nullptr) || CombatState != ECombatState::ECS_Unoccupied) return;
+
+	else ExchangeWeapon(NewWeapon);
+
+
+}
+
+void AMidnightTaskCharacter::ExchangeWeapon(AWeapon* WeaponToExchange)
+{
+	
+	OldEquippedWeapon = EquippedWeapon;
+	OldEquippedWeapon->SetItemState(EItemState::EIS_PickedUp);
+
+	if (OldEquippedWeapon->GetItemState() == EItemState::EIS_Pickup) return;
+
+	ReloadWeapon(OldEquippedWeapon, true);
+	
+	EquipWeapon(WeaponToExchange);
+
+	if (WeaponToExchange->GetItemState() == EItemState::EIS_Pickup) return;
+
+	WeaponToExchange->SetItemState(EItemState::EIS_Equipped);
+
+	CombatState = ECombatState::ECS_Equipping;
+
+	PlayEquipMontage(EquipMontage);
+	WeaponToExchange->PlayEquipSound(this, true);
+
+}
+
+void AMidnightTaskCharacter::ReloadButtonPressed()
+{
+	ReloadWeapon(EquippedWeapon);
+}
+
+void AMidnightTaskCharacter::GrabClip()
+{
+	if (EquippedWeapon == nullptr) return;
+	if (HandSceneComponent == nullptr) return;
+
+	int32 ClipBoneIndex{ EquippedWeapon->GetItemMesh()->GetBoneIndex(EquippedWeapon->GetClipBoneName()) };
+
+	ClipTransform = EquippedWeapon->GetItemMesh()->GetBoneTransform(ClipBoneIndex);
+
+	FAttachmentTransformRules AttachmentRules(EAttachmentRule::KeepRelative, true);
+	HandSceneComponent->AttachToComponent(GetMesh(), AttachmentRules, FName(TEXT("b_LeftHand")));
+	HandSceneComponent->SetWorldTransform(ClipTransform);
+
+	EquippedWeapon->SetMovingClip(true);
+}
+
+void AMidnightTaskCharacter::ReleaseClip()
+{
+	EquippedWeapon->SetMovingClip(false);
+}
+
+void AMidnightTaskCharacter::IncrementOverlappedItemCount(int8 Amount)
+{
+	if (OverlappedItemCount + Amount <= 0)
+	{
+		OverlappedItemCount = 0;
+		bShouldTraceForItems = false;
+	}
+	else
+	{
+		OverlappedItemCount += Amount;
+		bShouldTraceForItems = true;
+	}
 }
 
 void AMidnightTaskCharacter::StartEquipSoundTimer()
