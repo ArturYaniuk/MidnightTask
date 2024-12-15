@@ -42,6 +42,9 @@
     <Filter Include="Source\MidnightTask\Private">
       <UniqueIdentifier>{FF120809-087A-32A9-96C4-528541221E4F}</UniqueIdentifier>
     </Filter>
+    <ClCompile Include="..\..\Source\MidnightTask\Private\Enemy.cpp">
+      <Filter>Source\MidnightTask\Private</Filter>
+    </ClCompile>
     <ClCompile Include="..\..\Source\MidnightTask\Private\MidnightTask.cpp">
       <Filter>Source\MidnightTask\Private</Filter>
     </ClCompile>
@@ -78,6 +81,9 @@
     <Filter Include="Source\MidnightTask\Public">
       <UniqueIdentifier>{6F789F8D-6253-3D2A-B222-9F8B3D2A2222}</UniqueIdentifier>
     </Filter>
+    <ClCompile Include="..\..\Source\MidnightTask\Public\Enemy.h">
+      <Filter>Source\MidnightTask\Public</Filter>
+    </ClCompile>
     <ClCompile Include="..\..\Source\MidnightTask\Public\MidnightTask.h">
       <Filter>Source\MidnightTask\Public</Filter>
     </ClCompile>

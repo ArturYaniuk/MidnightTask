@@ -21,26 +21,49 @@ AProjectile::AProjectile() :
 {
 	PrimaryActorTick.bCanEverTick = true;
 
-
-	RootComponent = CreateDefaultSubobject<USceneComponent>(TEXT("ProjectileSceneComponent"));
-
+	if (!RootComponent)
+	{
+		RootComponent = CreateDefaultSubobject<USceneComponent>(TEXT("ProjectileSceneComponent"));
+	}
 	ProjectileStaticMeshComponent = CreateDefaultSubobject<UStaticMeshComponent>(TEXT("ProjectileStaticMeshComponent"));
+	
+
+	if (!CollisionComponent)
+	{
+		CollisionComponent = CreateDefaultSubobject<UCapsuleComponent>(TEXT("SphereComponent"));
+		// Set the sphere's collision profile name to "Projectile".
+		CollisionComponent->BodyInstance.SetCollisionProfileName(TEXT("Projectile"));
+		// Event called when component hits something.
+		CollisionComponent->OnComponentHit.AddDynamic(this, &AProjectile::OnHit);
+		// Set the Capsule's collision radius.
+		CollisionComponent->InitCapsuleSize(CollisionRadius, CollisionHalfHeight);
+		// Set the root component to be the collision component.
+		RootComponent = CollisionComponent;
+	}
+
+	
+
+	if (!ProjectileMovementComponent)
+	{
+		ProjectileMovementComponent = CreateDefaultSubobject<UProjectileMovementComponent>(TEXT("ProjectileMovementComponent"));
+		ProjectileStaticMeshComponent->SetupAttachment(RootComponent);
+
+		ProjectileMovementComponent->SetUpdatedComponent(CollisionComponent);
+
+		CollisionComponent->InitCapsuleSize(CollisionRadius, CollisionHalfHeight);
+		ProjectileMovementComponent->InitialSpeed = InitialSpeed;
+		ProjectileMovementComponent->MaxSpeed = MaxSpeed;
+		ProjectileMovementComponent->bRotationFollowsVelocity = true;
+		ProjectileMovementComponent->bRotationRemainsVertical = true;
+		ProjectileMovementComponent->bShouldBounce = bShouldBounce;
+		ProjectileMovementComponent->Bounciness = Bounciness;
+		ProjectileMovementComponent->ProjectileGravityScale = GravityScale;
 
 
-	CollisionComponent = CreateDefaultSubobject<UCapsuleComponent>(TEXT("SphereComponent"));
-	// Set the sphere's collision profile name to "Projectile".
-	CollisionComponent->BodyInstance.SetCollisionProfileName(TEXT("Projectile"));
-	// Event called when component hits something.
-	CollisionComponent->OnComponentHit.AddDynamic(this, &AProjectile::OnHit);
-	// Set the Capsule's collision radius.
-	CollisionComponent->InitCapsuleSize(CollisionRadius, CollisionHalfHeight);
-	// Set the root component to be the collision component.
-	RootComponent = CollisionComponent;
 
-	ProjectileMovementComponent = CreateDefaultSubobject<UProjectileMovementComponent>(TEXT("ProjectileMovementComponent"));
-	ProjectileStaticMeshComponent->SetupAttachment(RootComponent);
-
-	ProjectileMovementComponent->SetUpdatedComponent(CollisionComponent);
+		// Delete the projectile after 3 seconds.
+		InitialLifeSpan = LifeSpan;
+	}
 
 }
 
@@ -49,23 +72,11 @@ void AProjectile::BeginPlay()
 {
 	Super::BeginPlay();
 	
-	CollisionComponent->InitCapsuleSize(CollisionRadius, CollisionHalfHeight);
-	ProjectileMovementComponent->InitialSpeed = InitialSpeed;
-	ProjectileMovementComponent->MaxSpeed = MaxSpeed;
-	ProjectileMovementComponent->bRotationFollowsVelocity = true;
-	ProjectileMovementComponent->bRotationRemainsVertical = true;
-	ProjectileMovementComponent->bShouldBounce = bShouldBounce;
-	ProjectileMovementComponent->Bounciness = Bounciness;
-	ProjectileMovementComponent->ProjectileGravityScale = GravityScale;
-
-
-
-	// Delete the projectile after 3 seconds.
-	InitialLifeSpan = LifeSpan;
 }
 
 void AProjectile::OnHit(UPrimitiveComponent* HitComponent, AActor* OtherActor, UPrimitiveComponent* OtherComponent, FVector NormalImpulse, const FHitResult& Hit)
 {
+
 	if (OtherActor != nullptr && OtherActor != this && OtherComponent != nullptr && OtherComponent->IsSimulatingPhysics())
 	{
 
@@ -112,6 +123,19 @@ void AProjectile::OnHit(UPrimitiveComponent* HitComponent, AActor* OtherActor, U
 			}
 		}
 
+		
+
+	}
+	else
+	{
+		if (ImpactParticles)
+		{
+			UNiagaraFunctionLibrary::SpawnSystemAtLocation(
+				GetWorld(),
+				ImpactParticles,
+				Hit.Location,
+				Hit.ImpactPoint.Rotation());
+		}
 	}
 	Destroy(true);
 }

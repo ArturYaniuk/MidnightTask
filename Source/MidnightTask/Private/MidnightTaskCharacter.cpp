@@ -18,6 +18,11 @@
 #include "Items/Weapon.h"
 #include "Components/WidgetComponent.h"
 #include "Sound/SoundCue.h"
+#include "NiagaraFunctionLibrary.h"
+#include "Engine/SkeletalMeshSocket.h"
+#include "ActorComponents/BulletHitInterface.h"
+#include "Enemy.h"
+#include "DrawDebugHelpers.h"
 
 
 DEFINE_LOG_CATEGORY(LogTemplateCharacter);
@@ -159,6 +164,7 @@ void AMidnightTaskCharacter::Tick(float DeltaSeconds)
 
 	if (GetCharacterMovement()->IsFalling() && bHoldingJump)
 	{
+		CombatState = ECombatState::ECS_WallRuning;
 		FHitResult HitOutR = CheckWall(true);
 		FHitResult HitOutL = CheckWall(false);
 
@@ -175,7 +181,13 @@ void AMidnightTaskCharacter::Tick(float DeltaSeconds)
 	}
 	else if (bWallRunning)
 	{
+		CombatState = ECombatState::ECS_Unoccupied;
 		ToggleWallRun(false);
+	}
+
+	if (CombatState == ECombatState::ECS_Climbing && !MovementComponent->IsClimbing())
+	{
+		CombatState = ECombatState::ECS_Unoccupied;
 	}
 
 	TraceForItems();
@@ -419,8 +431,14 @@ void AMidnightTaskCharacter::FireWeapon()
 	{
 		PlayFireSound();
 		
-
-		AttackComponent->SpawnProjectile(EquippedWeapon->GetItemMesh()->GetSocketByName("BarrelSocket"), EquippedWeapon->GetItemMesh(),	EquippedWeapon->GetMuzzleFash(), GetViewRotation().Vector());
+		if (EquippedWeapon->GetWeaponIsEnergy())
+		{
+			AttackComponent->SpawnProjectile(EquippedWeapon->GetItemMesh()->GetSocketByName("BarrelSocket"), EquippedWeapon->GetItemMesh(), EquippedWeapon->GetMuzzleFash(), GetViewRotation().Vector());
+		}
+		else
+		{
+			SendBullet();
+		}
 
 		PlayGunFireMontage();
 		EquippedWeapon->DecrementAmmo();
@@ -652,6 +670,111 @@ void AMidnightTaskCharacter::CameraInterpZoom(float DeltaTime)
 	GetFollowCamera()->SetFieldOfView(CameraCurrentFOV);
 }
 
+void AMidnightTaskCharacter::SendBullet()
+{
+	const USkeletalMeshSocket* BarrelSocket = EquippedWeapon->GetItemMesh()->GetSocketByName("BarrelSocket");
+	if (BarrelSocket)
+	{
+		const FTransform SocketTransform = BarrelSocket->GetSocketTransform(EquippedWeapon->GetItemMesh());
+
+		if (EquippedWeapon->GetMuzzleFash())
+		{
+			UNiagaraFunctionLibrary::SpawnSystemAtLocation(GetWorld(), EquippedWeapon->GetMuzzleFash(), SocketTransform.GetLocation(), this->GetViewRotation());
+		}
+
+		FHitResult BeamHitResult;
+
+		bool bBeamEnd = GetBeamEndLocation(SocketTransform.GetLocation(), BeamHitResult);
+
+		if (bBeamEnd)
+		{
+			// Does hit Actor implement BulletHitInterface?
+			if (BeamHitResult.GetActor())
+			{
+				IBulletHitInterface* BulletHitInterface = Cast<IBulletHitInterface>(BeamHitResult.GetActor());
+				if (BulletHitInterface)
+				{
+					BulletHitInterface->BulletHit_Implementation(BeamHitResult);
+				}
+
+				AEnemy* HitEnemy = Cast<AEnemy>(BeamHitResult.GetActor());
+				if (HitEnemy)
+				{
+
+				
+					UGameplayStatics::ApplyDamage(
+						BeamHitResult.GetActor(),
+						EquippedWeapon->GetDamage(),
+						GetController(),
+						this,
+						UDamageType::StaticClass());
+
+				}
+			}
+
+
+			else
+			{
+				// Spawn default particles
+				if (ImpactParticles)
+				{
+					UNiagaraFunctionLibrary::SpawnSystemAtLocation(
+						GetWorld(),
+						ImpactParticles,
+						BeamHitResult.Location);
+				}
+			}
+
+
+			UParticleSystemComponent* Beam = UGameplayStatics::SpawnEmitterAtLocation(
+				GetWorld(),
+				BeamParticles,
+				SocketTransform);
+			if (Beam)
+			{
+				Beam->SetVectorParameter(FName("Target"), BeamHitResult.Location);
+			}
+		}
+	}
+}
+
+bool AMidnightTaskCharacter::GetBeamEndLocation(const FVector& MuzzleSocketLocation, FHitResult& OutHitResult)
+{
+	FVector OutBeamLocation;
+	// Check for crosshair trace hit
+	FHitResult CrosshairHitResult;
+	bool bCrosshairHit = TraceUnderCrosshairs(CrosshairHitResult, OutBeamLocation);
+
+	if (bCrosshairHit)
+	{
+		// Tentative beam location - still need to trace from gun
+		OutBeamLocation = CrosshairHitResult.Location;
+	}
+	else // no crosshair trace hit
+	{
+		// OutBeamLocation is the End location for the line trace
+	}
+
+	// Perform a second trace, this time from the gun barrel
+	const FVector WeaponTraceStart{ MuzzleSocketLocation };
+	const FVector WeaponTraceEnd{ OutBeamLocation };
+	GetWorld()->LineTraceSingleByChannel(
+		OutHitResult,
+		WeaponTraceStart,
+		WeaponTraceEnd,
+		ECollisionChannel::ECC_Visibility);
+	
+	if (!OutHitResult.bBlockingHit) // object between barrel and BeamEndPoint?
+	{
+		OutHitResult.Location = OutBeamLocation;
+		//DrawDebugLine(GetWorld(), WeaponTraceStart, WeaponTraceEnd, FColor::Red, false, 5.f);
+		//DrawDebugPoint(GetWorld(), OutHitResult.Location, 5.f, FColor::Green, false, 5.f);
+		return false;
+	}
+
+	return true;
+}
+
 void AMidnightTaskCharacter::IncrementOverlappedItemCount(int8 Amount)
 {
 	if (OverlappedItemCount + Amount <= 0)
@@ -712,6 +835,7 @@ void AMidnightTaskCharacter::Move(const FInputActionValue& Value)
 	}
 	else if (Controller != nullptr && MovementComponent->IsClimbing())
 	{
+		CombatState = ECombatState::ECS_Climbing;
 		DirectionY = FVector::CrossProduct(MovementComponent->GetClimbSurfaceNormal(), -GetActorRightVector());
 		DirectionX = FVector::CrossProduct(MovementComponent->GetClimbSurfaceNormal(), GetActorUpVector());
 

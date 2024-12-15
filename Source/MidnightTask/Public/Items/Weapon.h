@@ -40,6 +40,9 @@ public:
 	FORCEINLINE UParticleSystem* GetBeamParticle() const { return BeamParticles; }
 	FORCEINLINE USoundCue* GetFireSound() const { return FireSound; }
 
+	FORCEINLINE bool GetWeaponIsEnergy() const { return WeaponIsEnergy; }
+	FORCEINLINE int32 GetDamage() const { return Damage; }
+
 	FORCEINLINE float GetDamageMultiplier() const { return DamageMultiplier; }
 
 
@@ -96,5 +99,11 @@ private:
 
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Weapon Properties", meta = (AllowPrivateAccess = "true"))
 	float DamageMultiplier;
+
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Weapon Properties", meta = (AllowPrivateAccess = "true"))
+	bool WeaponIsEnergy;
+
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Weapon Properties", meta = (AllowPrivateAccess = "true"))
+	int32 Damage;
 
 };

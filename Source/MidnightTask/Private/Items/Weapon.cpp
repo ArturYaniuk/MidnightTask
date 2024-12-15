@@ -16,7 +16,9 @@ AWeapon::AWeapon() :
 	Ammo(300),
 	MagazineCapacity(30),
 	ReloadMontageSection(FName(TEXT("Reload"))),
-	ClipBoneName(TEXT("b_gun_mag"))
+	ClipBoneName(TEXT("b_gun_mag")),
+	WeaponIsEnergy(false),
+	Damage(5)
 {
 
 }

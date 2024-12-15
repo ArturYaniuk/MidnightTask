@@ -7,6 +7,8 @@ enum class ECombatState : uint8
 	ECS_FireTimerInProgress UMETA(DisplayName = "FireTimerInProgress"),
 	ECS_Reloading UMETA(DisplayName = "Reloading"),
 	ECS_Equipping UMETA(DisplayName = "Equipping"),
+	ECS_WallRuning UMETA(DisplayName = "WallRunning"),
+	ECS_Climbing UMETA(DisplayName = "Climbing"),
 
 	ECS_MAX UMETA(DisplayName = "DefaultMax")
 };

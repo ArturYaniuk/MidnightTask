@@ -30,4 +30,5 @@ public:
 
 	void SpawnProjectile(const USkeletalMeshSocket* BarrelSocket, USkeletalMeshComponent* GunMesh, UNiagaraSystem* MuzzleFlash, FVector Direction);
 
+
 };

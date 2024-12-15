@@ -16,7 +16,7 @@ class UTaskCharacterMovementComponent;
 #endif
 #define MIDNIGHTTASK_MidnightTaskCharacter_generated_h
 
-#define FID_Files_My_Works_UE_works_MidnightTask_Source_MidnightTask_Public_MidnightTaskCharacter_h_24_RPC_WRAPPERS_NO_PURE_DECLS \
+#define FID_Files_My_Works_UE_works_MidnightTask_Source_MidnightTask_Public_MidnightTaskCharacter_h_25_RPC_WRAPPERS_NO_PURE_DECLS \
 	DECLARE_FUNCTION(execGetCustomCharacterMovement); \
 	DECLARE_FUNCTION(execReleaseClip); \
 	DECLARE_FUNCTION(execGrabClip); \
@@ -24,7 +24,7 @@ class UTaskCharacterMovementComponent;
 	DECLARE_FUNCTION(execFinishReloading);
 
 
-#define FID_Files_My_Works_UE_works_MidnightTask_Source_MidnightTask_Public_MidnightTaskCharacter_h_24_INCLASS_NO_PURE_DECLS \
+#define FID_Files_My_Works_UE_works_MidnightTask_Source_MidnightTask_Public_MidnightTaskCharacter_h_25_INCLASS_NO_PURE_DECLS \
 private: \
 	static void StaticRegisterNativesAMidnightTaskCharacter(); \
 	friend struct Z_Construct_UClass_AMidnightTaskCharacter_Statics; \
@@ -33,7 +33,7 @@ public: \
 	DECLARE_SERIALIZER(AMidnightTaskCharacter)
 
 
-#define FID_Files_My_Works_UE_works_MidnightTask_Source_MidnightTask_Public_MidnightTaskCharacter_h_24_ENHANCED_CONSTRUCTORS \
+#define FID_Files_My_Works_UE_works_MidnightTask_Source_MidnightTask_Public_MidnightTaskCharacter_h_25_ENHANCED_CONSTRUCTORS \
 private: \
 	/** Private move- and copy-constructors, should never be used */ \
 	AMidnightTaskCharacter(AMidnightTaskCharacter&&); \
@@ -45,13 +45,13 @@ public: \
 	NO_API virtual ~AMidnightTaskCharacter();
 
 
-#define FID_Files_My_Works_UE_works_MidnightTask_Source_MidnightTask_Public_MidnightTaskCharacter_h_21_PROLOG
-#define FID_Files_My_Works_UE_works_MidnightTask_Source_MidnightTask_Public_MidnightTaskCharacter_h_24_GENERATED_BODY \
+#define FID_Files_My_Works_UE_works_MidnightTask_Source_MidnightTask_Public_MidnightTaskCharacter_h_22_PROLOG
+#define FID_Files_My_Works_UE_works_MidnightTask_Source_MidnightTask_Public_MidnightTaskCharacter_h_25_GENERATED_BODY \
 PRAGMA_DISABLE_DEPRECATION_WARNINGS \
 public: \
-	FID_Files_My_Works_UE_works_MidnightTask_Source_MidnightTask_Public_MidnightTaskCharacter_h_24_RPC_WRAPPERS_NO_PURE_DECLS \
-	FID_Files_My_Works_UE_works_MidnightTask_Source_MidnightTask_Public_MidnightTaskCharacter_h_24_INCLASS_NO_PURE_DECLS \
-	FID_Files_My_Works_UE_works_MidnightTask_Source_MidnightTask_Public_MidnightTaskCharacter_h_24_ENHANCED_CONSTRUCTORS \
+	FID_Files_My_Works_UE_works_MidnightTask_Source_MidnightTask_Public_MidnightTaskCharacter_h_25_RPC_WRAPPERS_NO_PURE_DECLS \
+	FID_Files_My_Works_UE_works_MidnightTask_Source_MidnightTask_Public_MidnightTaskCharacter_h_25_INCLASS_NO_PURE_DECLS \
+	FID_Files_My_Works_UE_works_MidnightTask_Source_MidnightTask_Public_MidnightTaskCharacter_h_25_ENHANCED_CONSTRUCTORS \
 private: \
 PRAGMA_ENABLE_DEPRECATION_WARNINGS
 

@@ -6,6 +6,7 @@
 #include "GameFramework/Character.h"
 #include "Logging/LogMacros.h"
 #include "ActorComponents/CombatState.h"
+#include "NiagaraComponent.h"
 #include "MidnightTaskCharacter.generated.h"
 
 class USpringArmComponent;
@@ -198,6 +199,12 @@ private:
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = Camera, meta = (AllowPrivateAccess = "true"))
 	float ZoomInterpSpeed;
 
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = Combat, meta = (AllowPrivateAccess = "true"))
+	UNiagaraSystem* ImpactParticles;
+
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = Combat, meta = (AllowPrivateAccess = "true"))
+	UParticleSystem* BeamParticles;
+
 protected:
 
 	/** Called for movement input */
@@ -306,6 +313,12 @@ protected:
 	void AimigButtonReleased();
 	
 	void CameraInterpZoom(float DeltaTime);
+
+	void SendBullet();
+
+	bool GetBeamEndLocation(
+		const FVector& MuzzleSocketLocation,
+		FHitResult& OutHitResult);
 
 public:
 	/** Returns CameraBoom subobject **/
