@@ -5,18 +5,22 @@
 #include "CoreMinimal.h"
 #include "GameFramework/Character.h"
 #include "Logging/LogMacros.h"
+#include "ActorComponents/CombatState.h"
+#include "NiagaraComponent.h"
 #include "MidnightTaskCharacter.generated.h"
 
 class USpringArmComponent;
 class UCameraComponent;
 class UInputMappingContext;
 class UInputAction;
+class AItem;
+class AWeapon;
 struct FInputActionValue;
 
 DECLARE_LOG_CATEGORY_EXTERN(LogTemplateCharacter, Log, All);
 
 UCLASS(config=Game)
-class AMidnightTaskCharacter : public ACharacter
+class AMidnightTaskCharacter : public ACharacter 
 {
 	GENERATED_BODY()
 
@@ -102,12 +106,104 @@ public:
 	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = Sliding)
 	float SlideReloadTime = 5.0f;
 
+	virtual float TakeDamage(float DamageAmount, struct FDamageEvent const& DamageEvent, class AController* EventInstigator, AActor* DamageCauser) override;
+
+
 
 private:
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = Combat, meta = (AllowPrivateAccess = "true"))
 	UAnimMontage* WallJump;
 
 	FTimerHandle SlideTimer;
+
+	FTimerHandle EquipSoundTimer;
+
+	bool bShouldPlayEquipSound = true;
+
+	void ResetEquipSoundTimer();
+
+	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = Items, meta = (AllowPrivateAccess = "true"))
+	float EquipSoundResetTime = 0.2f;
+
+	UPROPERTY(VisibleInstanceOnly)
+	AItem* OverlappingItem;
+
+	UPROPERTY(VisibleAnywhere)
+	class UHealthComponent* HealthComponent;
+
+	UPROPERTY(VisibleAnywhere)
+	class UAttackComponent* AttackComponent;
+
+	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = Combat, meta = (AllowPrivateAccess = "true"))
+	ECombatState CombatState;
+
+	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = Combat, meta = (AllowPrivateAccess = "true"))
+	ECharacterState CharacterState;
+
+	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = Combat, meta = (AllowPrivateAccess = "true"))
+	AItem* TraceHitItem;
+
+	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = Items, meta = (AllowPrivateAccess = "true"))
+	AItem* TraceHitItemLastFrame;
+
+	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = Inventory, meta = (AllowPrivateAccess = "true"))
+	TArray<AItem*> Inventory;
+
+	const int32 INVENTORY_CAPACITY{ 2 };
+
+	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = Character, meta = (AllowPrivateAccess = "true"))
+	bool bAiming;
+
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = Combat, meta = (AllowPrivateAccess = "true"))
+	UAnimMontage* ReloadMontage;
+
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = Combat, meta = (AllowPrivateAccess = "true"))
+	UAnimMontage* EquipMontage;
+
+	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = Combat, meta = (AllowPrivateAccess = "true"))
+	AWeapon* EquippedWeapon;
+
+	bool bShouldTraceForItems;
+
+	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = Items, meta = (AllowPrivateAccess = "true"))
+	bool bFireButtonPressed;
+
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = Combat, meta = (AllowPrivateAccess = "true"))
+	UAnimMontage* HipFireMontage;
+
+	FTimerHandle AutoFireTimer;
+
+	FTimerHandle isPocketReloading;
+
+	AWeapon* OldEquippedWeapon;
+
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = Combat, meta = (AllowPrivateAccess = "true"))
+	int32 AmmoCapacity;
+
+	/** Number of overlapped AItems */
+	int8 OverlappedItemCount;
+
+	// Scene component to attach to the Character's hand during reloading
+	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = Combat, meta = (AllowPrivateAccess = "true"))
+	USceneComponent* HandSceneComponent;
+
+	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = Combat, meta = (AllowPrivateAccess = "true"))
+	FTransform ClipTransform;
+
+	float CameraDefaultFOV;
+
+	float CameraZoomedFOV;
+
+	float CameraCurrentFOV;
+
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = Camera, meta = (AllowPrivateAccess = "true"))
+	float ZoomInterpSpeed;
+
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = Combat, meta = (AllowPrivateAccess = "true"))
+	UNiagaraSystem* ImpactParticles;
+
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = Combat, meta = (AllowPrivateAccess = "true"))
+	UParticleSystem* BeamParticles;
 
 protected:
 
@@ -136,6 +232,9 @@ protected:
 
 	void ResetSlideTime();
 
+	void EKeyPressed();
+	void EKeyReleased();
+
 protected:
 
 	virtual void NotifyControllerChanged() override;
@@ -149,6 +248,77 @@ protected:
 
 	void PlayJumpMontage(UAnimMontage* Montage, FName JumpSide);
 
+	void GetPickupItem(AItem* Item);
+
+	void EquipOrSwap(AWeapon* WeaponToEquip);
+
+	void PlayEquipMontage(UAnimMontage* Montage);
+
+	void StopAiming();
+
+	void EquipWeapon(AWeapon* WeaponToEquip);
+
+	void SwapWeapon(AWeapon* WeaponToSwap);
+
+	void DropWeapon();
+
+	void TraceForItems();
+
+	bool TraceUnderCrosshairs(FHitResult& OutHitResult, FVector& OutHitLocation);
+
+	void FireButtonPressed();
+
+	void FireButtonReleased();
+
+	void FireWeapon();
+
+	bool WeaponHasAmmo(AWeapon* Weapon);
+
+	void PlayFireSound();
+
+	void PlayGunFireMontage();
+
+	void StartFireTimer();
+
+	void AutoFireReset();
+
+	void ReloadWeapon(AWeapon* Weapon, bool pocketReload = false);
+
+	void StartPocketReload();
+
+	UFUNCTION(BlueprintCallable)
+	void FinishReloading(AWeapon* Weapon);
+
+	UFUNCTION(BlueprintCallable)
+	void FinishEquipping();
+
+	void OneKeyPressed();
+
+	void TwoKeyPressed();
+
+	void ExchangeInventoryItem(int32 NewItemIndex);
+
+	void ExchangeWeapon(AWeapon* WeaponToExchange);
+
+	void ReloadButtonPressed();
+
+	UFUNCTION(BlueprintCallable)
+	void GrabClip();
+
+	UFUNCTION(BlueprintCallable)
+	void ReleaseClip();
+
+	void AimingButtonPressed();
+
+	void AimigButtonReleased();
+	
+	void CameraInterpZoom(float DeltaTime);
+
+	void SendBullet();
+
+	bool GetBeamEndLocation(
+		const FVector& MuzzleSocketLocation,
+		FHitResult& OutHitResult);
 
 public:
 	/** Returns CameraBoom subobject **/
@@ -159,6 +329,12 @@ public:
 	UFUNCTION(BlueprintPure)
 	FORCEINLINE UTaskCharacterMovementComponent* GetCustomCharacterMovement() const { return MovementComponent; }
 
+	void StartEquipSoundTimer();
+
+	FORCEINLINE bool ShouldPlayEquipSound() const { return bShouldPlayEquipSound; }
+	FORCEINLINE void SetOverlappingItem(AItem* Item) { OverlappingItem = Item; }
+
+	void IncrementOverlappedItemCount(int8 Amount);
 
 };
 

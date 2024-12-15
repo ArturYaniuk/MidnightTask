@@ -7,15 +7,41 @@
 #include "GameFramework/CharacterMovementComponent.h"
 #include "GameFramework/SpringArmComponent.h"
 #include "GameFramework/Controller.h"
+#include "Kismet/GameplayStatics.h"
 #include "EnhancedInputComponent.h"
 #include "EnhancedInputSubsystems.h"
 #include "TaskCharacterMovementComponent.h"
 #include "InputActionValue.h"
+#include "ActorComponents/HealthComponent.h"
+#include "ActorComponents/AttackComponent.h"
+#include "ActorComponents/CombatState.h"
+#include "Items/Weapon.h"
+#include "Components/WidgetComponent.h"
+#include "Sound/SoundCue.h"
+#include "NiagaraFunctionLibrary.h"
+#include "Engine/SkeletalMeshSocket.h"
+#include "ActorComponents/BulletHitInterface.h"
+#include "Enemy.h"
+#include "DrawDebugHelpers.h"
+
 
 DEFINE_LOG_CATEGORY(LogTemplateCharacter);
 
 
-AMidnightTaskCharacter::AMidnightTaskCharacter(const FObjectInitializer& ObjectInitializer) : Super(ObjectInitializer.SetDefaultSubobjectClass<UTaskCharacterMovementComponent>(ACharacter::CharacterMovementComponentName)) 
+AMidnightTaskCharacter::AMidnightTaskCharacter(const FObjectInitializer& ObjectInitializer) : 
+	Super(ObjectInitializer.SetDefaultSubobjectClass<UTaskCharacterMovementComponent>(ACharacter::CharacterMovementComponentName)) ,
+	CombatState(ECombatState::ECS_Unoccupied),
+	CharacterState(ECharacterState::ECS_Unequipped),
+	bShouldTraceForItems(false),
+	bFireButtonPressed(false),
+	AmmoCapacity(100),
+	OverlappedItemCount(0),
+	bAiming(false),
+	CameraDefaultFOV(90.f),
+	CameraZoomedFOV(60.f),
+	CameraCurrentFOV(0.f),
+	ZoomInterpSpeed(0.f)
+
 {
 	MovementComponent = Cast<UTaskCharacterMovementComponent>(GetCharacterMovement());
 
@@ -58,8 +84,15 @@ AMidnightTaskCharacter::AMidnightTaskCharacter(const FObjectInitializer& ObjectI
 	FollowCamera->SetupAttachment(CameraBoom, USpringArmComponent::SocketName); // Attach the camera to the end of the boom and let the boom adjust to match the controller orientation
 	FollowCamera->bUsePawnControlRotation = false; // Camera does not rotate relative to arm
 
-	// Note: The skeletal mesh and anim blueprint references on the Mesh component (inherited from Character) 
-	// are set in the derived blueprint asset named ThirdPersonCharacter (to avoid direct content references in C++)
+	bUseControllerRotationPitch = false;
+	bUseControllerRotationYaw = true;
+	bUseControllerRotationRoll = false;
+
+	HandSceneComponent = CreateDefaultSubobject<USceneComponent>(TEXT("HandSceneComp"));
+
+	HealthComponent = CreateDefaultSubobject<UHealthComponent>(TEXT("HealthComponent"));
+
+	AttackComponent = CreateDefaultSubobject<UAttackComponent>(TEXT("Attack Component"));
 }
 
 //////////////////////////////////////////////////////////////////////////
@@ -100,6 +133,23 @@ void AMidnightTaskCharacter::SetupPlayerInputComponent(UInputComponent* PlayerIn
 		PlayerInputComponent->BindAction("Slide", IE_Pressed, this, &AMidnightTaskCharacter::Slide);
 		PlayerInputComponent->BindAction("Slide", IE_Released, this, &AMidnightTaskCharacter::CancelSlide);
 
+		PlayerInputComponent->BindAction("Equip", IE_Pressed, this, &AMidnightTaskCharacter::EKeyPressed);
+		PlayerInputComponent->BindAction("Equip", IE_Released, this, &AMidnightTaskCharacter::EKeyReleased);
+
+		PlayerInputComponent->BindAction("Attack", IE_Pressed, this, &AMidnightTaskCharacter::FireButtonPressed);
+		PlayerInputComponent->BindAction("Attack", IE_Released, this, &AMidnightTaskCharacter::FireButtonReleased);
+
+		PlayerInputComponent->BindAction("AimingButton", IE_Pressed, this, &AMidnightTaskCharacter::AimingButtonPressed);
+		PlayerInputComponent->BindAction("AimingButton", IE_Released, this, &AMidnightTaskCharacter::AimigButtonReleased);
+
+
+		PlayerInputComponent->BindAction("1Key", IE_Pressed, this, &AMidnightTaskCharacter::OneKeyPressed);
+		PlayerInputComponent->BindAction("2Key", IE_Pressed, this, &AMidnightTaskCharacter::TwoKeyPressed);
+
+		PlayerInputComponent->BindAction("ReloadButton", IE_Pressed, this, &AMidnightTaskCharacter::ReloadButtonPressed);
+
+
+
 
 	}
 	else
@@ -110,8 +160,11 @@ void AMidnightTaskCharacter::SetupPlayerInputComponent(UInputComponent* PlayerIn
 
 void AMidnightTaskCharacter::Tick(float DeltaSeconds)
 { 
+	Super::Tick(DeltaSeconds);
+
 	if (GetCharacterMovement()->IsFalling() && bHoldingJump)
 	{
+		CombatState = ECombatState::ECS_WallRuning;
 		FHitResult HitOutR = CheckWall(true);
 		FHitResult HitOutL = CheckWall(false);
 
@@ -128,10 +181,18 @@ void AMidnightTaskCharacter::Tick(float DeltaSeconds)
 	}
 	else if (bWallRunning)
 	{
+		CombatState = ECombatState::ECS_Unoccupied;
 		ToggleWallRun(false);
 	}
-	
-	Super::Tick(DeltaSeconds);
+
+	if (CombatState == ECombatState::ECS_Climbing && !MovementComponent->IsClimbing())
+	{
+		CombatState = ECombatState::ECS_Unoccupied;
+	}
+
+	TraceForItems();
+	CameraInterpZoom(DeltaSeconds);
+
 }
 
 void AMidnightTaskCharacter::Jump()
@@ -173,6 +234,582 @@ void AMidnightTaskCharacter::PlayJumpMontage(UAnimMontage* Montage, FName JumpSi
 	}
 }
 
+void AMidnightTaskCharacter::GetPickupItem(AItem* Item)
+{
+	AWeapon* OverlappingWeapon = Cast<AWeapon>(Item);
+
+	if (OverlappingWeapon)
+	{
+		EquipOrSwap(OverlappingWeapon);
+		Item->PlayEquipSound(this);
+	}
+}
+
+void AMidnightTaskCharacter::EquipOrSwap(AWeapon* WeaponToEquip)
+{
+	
+	 if (Inventory.Num() < INVENTORY_CAPACITY)
+	{
+		WeaponToEquip->SetSlotIndex(Inventory.Num());
+		PlayEquipMontage(EquipMontage);
+		Inventory.Add(WeaponToEquip);
+		WeaponToEquip->SetItemState(EItemState::EIS_PickedUp);
+		return;
+	}
+	else
+	{
+		for (size_t i = 0; i < INVENTORY_CAPACITY; i++)
+		{
+			if (Inventory[i] == nullptr)
+			{
+				EquipWeapon(WeaponToEquip);
+				Inventory[i] = WeaponToEquip;
+				WeaponToEquip->SetItemState(EItemState::EIS_PickedUp);
+				return;
+			}
+		}
+	}
+
+	SwapWeapon(WeaponToEquip);
+}
+
+void AMidnightTaskCharacter::PlayEquipMontage(UAnimMontage* Montage)
+{
+	UAnimInstance* AnimInstance = GetMesh()->GetAnimInstance();
+
+	if (AnimInstance && Montage)
+	{
+		StopAiming();
+		AnimInstance->Montage_Play(Montage);
+		AnimInstance->Montage_JumpToSection(FName("Equip"));
+	}
+}
+
+void AMidnightTaskCharacter::StopAiming()
+{
+	if (bAiming)
+	{
+		bAiming = false;
+	}
+}
+
+void AMidnightTaskCharacter::EquipWeapon(AWeapon* WeaponToEquip)
+{
+	
+	WeaponToEquip->Equip(GetMesh(), FName("RightHandSocket"));
+	EquippedWeapon = WeaponToEquip;
+	CharacterState = ECharacterState::ECS_EquipedFirstWeapon;
+	EquippedWeapon->SetItemState(EItemState::EIS_Equipped);
+	StopAiming();
+
+}
+
+void AMidnightTaskCharacter::SwapWeapon(AWeapon* WeaponToSwap)
+{
+	if (EquippedWeapon == nullptr)
+	{
+		if (GEngine) GEngine->AddOnScreenDebugMessage(20, -1, FColor::Cyan, TEXT("HOTBAR IS FULL"));
+		return;
+	}
+	if (Inventory.Num() - 1 >= EquippedWeapon->GetSlotIndex())
+	{
+		Inventory[EquippedWeapon->GetSlotIndex()] = WeaponToSwap;
+		WeaponToSwap->SetSlotIndex(EquippedWeapon->GetSlotIndex());
+	}
+	DropWeapon();
+	EquipWeapon(WeaponToSwap);
+	TraceHitItem = nullptr;
+	TraceHitItemLastFrame = nullptr;
+}
+
+void AMidnightTaskCharacter::DropWeapon()
+{
+	if (EquippedWeapon)
+	{
+		if (EquippedWeapon->GetItemState() == EItemState::EIS_Falling || EquippedWeapon->GetItemState() == EItemState::EIS_Pickup) return;
+		FDetachmentTransformRules DetachmentTransformRules(EDetachmentRule::KeepWorld, true);
+		EquippedWeapon->GetItemMesh()->DetachFromComponent(DetachmentTransformRules);
+		EquippedWeapon->SetItemState(EItemState::EIS_Falling);
+		EquippedWeapon->ThrowWeapon();
+		StopAiming();
+
+	}
+}
+
+void AMidnightTaskCharacter::TraceForItems()
+{
+	if (bShouldTraceForItems)
+	{
+		FHitResult ItemTraceResult;
+		FVector HitLocation;
+		TraceUnderCrosshairs(ItemTraceResult, HitLocation);
+		if (ItemTraceResult.bBlockingHit)
+		{
+
+			TraceHitItem = Cast<AItem>(ItemTraceResult.GetActor());
+
+			if (TraceHitItem && TraceHitItem->GetItemState() == EItemState::EIS_Equipped)
+			{
+				TraceHitItem = nullptr;
+				return;
+			}
+
+			if (TraceHitItem && TraceHitItem->GetPickupWidget())
+			{
+				TraceHitItem->GetPickupWidget()->SetVisibility(true);
+
+				if (Inventory.Num() >= INVENTORY_CAPACITY) TraceHitItem->SetCharacterInventoryFull(true);
+				else TraceHitItem->SetCharacterInventoryFull(false);
+			}
+
+			if (TraceHitItemLastFrame)
+			{
+				if (TraceHitItem != TraceHitItemLastFrame)	TraceHitItemLastFrame->GetPickupWidget()->SetVisibility(false);
+			}
+			TraceHitItemLastFrame = TraceHitItem;
+		}
+	}
+	else if (TraceHitItemLastFrame)
+	{
+		TraceHitItemLastFrame->GetPickupWidget()->SetVisibility(false);
+	}
+}
+
+bool AMidnightTaskCharacter::TraceUnderCrosshairs(FHitResult& OutHitResult, FVector& OutHitLocation)
+{
+	FVector2D ViewportSize{};
+	if (GEngine && GEngine->GameViewport)
+	{
+		GEngine->GameViewport->GetViewportSize(ViewportSize);
+	}
+
+	FVector2D CrosshairLocation(ViewportSize.X / 2.f, ViewportSize.Y / 2.f);
+	FVector CrosshairWorldPosition;
+	FVector CrossHairWorldDirection;
+
+	//Get world position and direction of crosshairs
+
+	bool bScreenToWorld = UGameplayStatics::DeprojectScreenToWorld(
+		UGameplayStatics::GetPlayerController(this, 0),
+		CrosshairLocation,
+		CrosshairWorldPosition,
+		CrossHairWorldDirection);
+
+	if (bScreenToWorld)
+	{
+		const FVector Start{ CrosshairWorldPosition };
+		const FVector End{ Start + CrossHairWorldDirection * 50'000.f };
+		OutHitLocation = End;
+		GetWorld()->LineTraceSingleByChannel(OutHitResult, Start, End, ECollisionChannel::ECC_Visibility);
+
+		if (OutHitResult.bBlockingHit)
+		{
+			OutHitLocation = OutHitResult.Location;
+			return true;
+		}
+	}
+	return false;
+}
+
+void AMidnightTaskCharacter::FireButtonPressed()
+{
+	bFireButtonPressed = true;
+	FireWeapon();
+}
+
+void AMidnightTaskCharacter::FireButtonReleased()
+{
+	bFireButtonPressed = false;
+}
+
+void AMidnightTaskCharacter::FireWeapon()
+{
+	if (EquippedWeapon == nullptr) return;
+	if (CombatState != ECombatState::ECS_Unoccupied) return;
+
+	if (WeaponHasAmmo(EquippedWeapon))
+	{
+		PlayFireSound();
+		
+		if (EquippedWeapon->GetWeaponIsEnergy())
+		{
+			AttackComponent->SpawnProjectile(EquippedWeapon->GetItemMesh()->GetSocketByName("BarrelSocket"), EquippedWeapon->GetItemMesh(), EquippedWeapon->GetMuzzleFash(), GetViewRotation().Vector());
+		}
+		else
+		{
+			SendBullet();
+		}
+
+		PlayGunFireMontage();
+		EquippedWeapon->DecrementAmmo();
+
+		StartFireTimer();
+	}
+}
+
+bool AMidnightTaskCharacter::WeaponHasAmmo(AWeapon* Weapon)
+{
+	if (Weapon == nullptr)	return false;
+
+	return Weapon->GetAmmo() > 0;
+}
+
+void AMidnightTaskCharacter::PlayFireSound()
+{
+	if (EquippedWeapon->GetFireSound())
+	{
+		UGameplayStatics::PlaySound2D(this, EquippedWeapon->GetFireSound());
+	}
+}
+
+void AMidnightTaskCharacter::PlayGunFireMontage()
+{
+	UAnimInstance* AnimInstance = GetMesh()->GetAnimInstance();
+	if (AnimInstance && HipFireMontage)
+	{
+		AnimInstance->Montage_Play(HipFireMontage);
+		AnimInstance->Montage_JumpToSection(FName("StartFire"));
+	}
+}
+
+void AMidnightTaskCharacter::StartFireTimer()
+{
+	if (EquippedWeapon == nullptr) return;
+
+	CombatState = ECombatState::ECS_FireTimerInProgress;
+	GetWorldTimerManager().SetTimer(AutoFireTimer, this, &AMidnightTaskCharacter::AutoFireReset, EquippedWeapon->GetAutoFireRate());
+}
+
+void AMidnightTaskCharacter::AutoFireReset()
+{
+	CombatState = ECombatState::ECS_Unoccupied;
+
+	if (WeaponHasAmmo(EquippedWeapon))
+	{
+		if (bFireButtonPressed)
+		{
+			FireWeapon();
+		}
+	}
+	else
+	{
+		ReloadWeapon(EquippedWeapon);
+	}
+}
+
+void AMidnightTaskCharacter::ReloadWeapon(AWeapon* Weapon, bool pocketReload)
+{
+	if (Weapon == nullptr) return;
+	if (pocketReload)
+	{
+		GetWorldTimerManager().SetTimer(isPocketReloading, this, &AMidnightTaskCharacter::StartPocketReload, 1.0f);
+	}
+	if (CombatState != ECombatState::ECS_Unoccupied) return;
+
+	if (!pocketReload)
+	{
+		if ((AmmoCapacity > 0) && !EquippedWeapon->ClipIsFull())
+		{
+			CombatState = ECombatState::ECS_Reloading;
+
+			UAnimInstance* AnimInstance = GetMesh()->GetAnimInstance();
+			StopAiming();
+			if (AnimInstance && ReloadMontage)
+			{
+				AnimInstance->Montage_Play(ReloadMontage);
+				AnimInstance->Montage_JumpToSection(Weapon->GetReloadMontageSection());
+			}
+		}
+	}
+
+
+}
+
+void AMidnightTaskCharacter::StartPocketReload()
+{
+	if (OldEquippedWeapon)
+	{
+		FinishReloading(OldEquippedWeapon);
+	}
+}
+
+void AMidnightTaskCharacter::FinishReloading(AWeapon* Weapon)
+{
+	CombatState = ECombatState::ECS_Unoccupied;
+	if (Weapon == nullptr) return;
+
+	
+	
+
+	const int32 MagEmptySpace = Weapon->GetMagazineCapacity() - Weapon->GetAmmo();
+
+	if (MagEmptySpace > AmmoCapacity)
+	{
+		// reload the magazine with all the ammo we are carrying
+		Weapon->ReloadAmmo(AmmoCapacity);
+		AmmoCapacity = 0;
+	}
+	else
+	{
+		// fill the magazine
+		Weapon->ReloadAmmo(MagEmptySpace);
+		AmmoCapacity -= MagEmptySpace;
+	}
+	
+}
+
+void AMidnightTaskCharacter::FinishEquipping()
+{
+	CombatState = ECombatState::ECS_Unoccupied;
+}
+
+void AMidnightTaskCharacter::OneKeyPressed()
+{
+	ExchangeInventoryItem(0);
+}
+
+void AMidnightTaskCharacter::TwoKeyPressed()
+{
+	ExchangeInventoryItem(1);
+}
+
+void AMidnightTaskCharacter::ExchangeInventoryItem(int32 NewItemIndex)
+{
+	if (NewItemIndex >= Inventory.Num()) return;
+
+	auto NewWeapon = Cast<AWeapon>(Inventory[NewItemIndex]);
+
+	if (EquippedWeapon == nullptr)
+	{
+		EquipWeapon(NewWeapon);
+		NewWeapon->SetItemState(EItemState::EIS_Equipped);
+		PlayEquipMontage(EquipMontage);
+		NewWeapon->PlayEquipSound(this, true);
+		return;
+	}
+
+	else if ((EquippedWeapon->GetSlotIndex() == NewItemIndex) || (Inventory[NewItemIndex] == nullptr) || CombatState != ECombatState::ECS_Unoccupied) return;
+
+	else ExchangeWeapon(NewWeapon);
+
+
+}
+
+void AMidnightTaskCharacter::ExchangeWeapon(AWeapon* WeaponToExchange)
+{
+	
+	OldEquippedWeapon = EquippedWeapon;
+	OldEquippedWeapon->SetItemState(EItemState::EIS_PickedUp);
+
+	if (OldEquippedWeapon->GetItemState() == EItemState::EIS_Pickup) return;
+
+	ReloadWeapon(OldEquippedWeapon, true);
+	
+	EquipWeapon(WeaponToExchange);
+
+	if (WeaponToExchange->GetItemState() == EItemState::EIS_Pickup) return;
+
+	WeaponToExchange->SetItemState(EItemState::EIS_Equipped);
+
+	CombatState = ECombatState::ECS_Equipping;
+
+	PlayEquipMontage(EquipMontage);
+	WeaponToExchange->PlayEquipSound(this, true);
+
+}
+
+void AMidnightTaskCharacter::ReloadButtonPressed()
+{
+	ReloadWeapon(EquippedWeapon);
+}
+
+void AMidnightTaskCharacter::GrabClip()
+{
+	if (EquippedWeapon == nullptr) return;
+	if (HandSceneComponent == nullptr) return;
+
+	int32 ClipBoneIndex{ EquippedWeapon->GetItemMesh()->GetBoneIndex(EquippedWeapon->GetClipBoneName()) };
+
+	ClipTransform = EquippedWeapon->GetItemMesh()->GetBoneTransform(ClipBoneIndex);
+
+	FAttachmentTransformRules AttachmentRules(EAttachmentRule::KeepRelative, true);
+	HandSceneComponent->AttachToComponent(GetMesh(), AttachmentRules, FName(TEXT("b_LeftHand")));
+	HandSceneComponent->SetWorldTransform(ClipTransform);
+
+	EquippedWeapon->SetMovingClip(true);
+}
+
+void AMidnightTaskCharacter::ReleaseClip()
+{
+	EquippedWeapon->SetMovingClip(false);
+}
+
+void AMidnightTaskCharacter::AimingButtonPressed()
+{
+	if (CombatState == ECombatState::ECS_Reloading || CombatState == ECombatState::ECS_Equipping) return;
+	bAiming = true;
+	GetCharacterMovement()->MaxWalkSpeed = 300;
+}
+
+void AMidnightTaskCharacter::AimigButtonReleased()
+{
+	bAiming = false;
+	GetCharacterMovement()->MaxWalkSpeed = 500;
+}
+
+void AMidnightTaskCharacter::CameraInterpZoom(float DeltaTime)
+{
+	if (bAiming)
+	{
+		CameraCurrentFOV = FMath::FInterpTo(CameraCurrentFOV, CameraZoomedFOV, DeltaTime, ZoomInterpSpeed);
+	}
+	else
+	{
+		CameraCurrentFOV = FMath::FInterpTo(CameraCurrentFOV, CameraDefaultFOV, DeltaTime, ZoomInterpSpeed);
+	}
+	GetFollowCamera()->SetFieldOfView(CameraCurrentFOV);
+}
+
+void AMidnightTaskCharacter::SendBullet()
+{
+	const USkeletalMeshSocket* BarrelSocket = EquippedWeapon->GetItemMesh()->GetSocketByName("BarrelSocket");
+	if (BarrelSocket)
+	{
+		const FTransform SocketTransform = BarrelSocket->GetSocketTransform(EquippedWeapon->GetItemMesh());
+
+		if (EquippedWeapon->GetMuzzleFash())
+		{
+			UNiagaraFunctionLibrary::SpawnSystemAtLocation(GetWorld(), EquippedWeapon->GetMuzzleFash(), SocketTransform.GetLocation(), this->GetViewRotation());
+		}
+
+		FHitResult BeamHitResult;
+
+		bool bBeamEnd = GetBeamEndLocation(SocketTransform.GetLocation(), BeamHitResult);
+
+		if (bBeamEnd)
+		{
+			// Does hit Actor implement BulletHitInterface?
+			if (BeamHitResult.GetActor())
+			{
+				IBulletHitInterface* BulletHitInterface = Cast<IBulletHitInterface>(BeamHitResult.GetActor());
+				if (BulletHitInterface)
+				{
+					BulletHitInterface->BulletHit_Implementation(BeamHitResult);
+				}
+
+				AEnemy* HitEnemy = Cast<AEnemy>(BeamHitResult.GetActor());
+				if (HitEnemy)
+				{
+
+				
+					UGameplayStatics::ApplyDamage(
+						BeamHitResult.GetActor(),
+						EquippedWeapon->GetDamage(),
+						GetController(),
+						this,
+						UDamageType::StaticClass());
+
+				}
+			}
+
+
+			else
+			{
+				// Spawn default particles
+				if (ImpactParticles)
+				{
+					UNiagaraFunctionLibrary::SpawnSystemAtLocation(
+						GetWorld(),
+						ImpactParticles,
+						BeamHitResult.Location);
+				}
+			}
+
+
+			UParticleSystemComponent* Beam = UGameplayStatics::SpawnEmitterAtLocation(
+				GetWorld(),
+				BeamParticles,
+				SocketTransform);
+			if (Beam)
+			{
+				Beam->SetVectorParameter(FName("Target"), BeamHitResult.Location);
+			}
+		}
+	}
+}
+
+bool AMidnightTaskCharacter::GetBeamEndLocation(const FVector& MuzzleSocketLocation, FHitResult& OutHitResult)
+{
+	FVector OutBeamLocation;
+	// Check for crosshair trace hit
+	FHitResult CrosshairHitResult;
+	bool bCrosshairHit = TraceUnderCrosshairs(CrosshairHitResult, OutBeamLocation);
+
+	if (bCrosshairHit)
+	{
+		// Tentative beam location - still need to trace from gun
+		OutBeamLocation = CrosshairHitResult.Location;
+	}
+	else // no crosshair trace hit
+	{
+		// OutBeamLocation is the End location for the line trace
+	}
+
+	// Perform a second trace, this time from the gun barrel
+	const FVector WeaponTraceStart{ MuzzleSocketLocation };
+	const FVector WeaponTraceEnd{ OutBeamLocation };
+	GetWorld()->LineTraceSingleByChannel(
+		OutHitResult,
+		WeaponTraceStart,
+		WeaponTraceEnd,
+		ECollisionChannel::ECC_Visibility);
+	
+	if (!OutHitResult.bBlockingHit) // object between barrel and BeamEndPoint?
+	{
+		OutHitResult.Location = OutBeamLocation;
+		//DrawDebugLine(GetWorld(), WeaponTraceStart, WeaponTraceEnd, FColor::Red, false, 5.f);
+		//DrawDebugPoint(GetWorld(), OutHitResult.Location, 5.f, FColor::Green, false, 5.f);
+		return false;
+	}
+
+	return true;
+}
+
+void AMidnightTaskCharacter::IncrementOverlappedItemCount(int8 Amount)
+{
+	if (OverlappedItemCount + Amount <= 0)
+	{
+		OverlappedItemCount = 0;
+		bShouldTraceForItems = false;
+	}
+	else
+	{
+		OverlappedItemCount += Amount;
+		bShouldTraceForItems = true;
+	}
+}
+
+void AMidnightTaskCharacter::StartEquipSoundTimer()
+{
+	bShouldPlayEquipSound = false;
+	GetWorldTimerManager().SetTimer(EquipSoundTimer, this, &AMidnightTaskCharacter::ResetEquipSoundTimer, EquipSoundResetTime);
+}
+
+float AMidnightTaskCharacter::TakeDamage(float DamageAmount, FDamageEvent const& DamageEvent, AController* EventInstigator, AActor* DamageCauser)
+{
+	HealthComponent->ReceiveDamage(DamageAmount);
+	if (!HealthComponent->IsAlive())
+	{
+		//TODO: Player death
+	}
+	return DamageAmount;
+}
+
+void AMidnightTaskCharacter::ResetEquipSoundTimer()
+{
+	bShouldPlayEquipSound = true;
+}
+
 void AMidnightTaskCharacter::Move(const FInputActionValue& Value)
 {
 	// input is a Vector2D
@@ -198,6 +835,7 @@ void AMidnightTaskCharacter::Move(const FInputActionValue& Value)
 	}
 	else if (Controller != nullptr && MovementComponent->IsClimbing())
 	{
+		CombatState = ECombatState::ECS_Climbing;
 		DirectionY = FVector::CrossProduct(MovementComponent->GetClimbSurfaceNormal(), -GetActorRightVector());
 		DirectionX = FVector::CrossProduct(MovementComponent->GetClimbSurfaceNormal(), GetActorUpVector());
 
@@ -311,5 +949,20 @@ void AMidnightTaskCharacter::CancelSlide()
 void AMidnightTaskCharacter::ResetSlideTime()
 {
 	CanSlide = true;
+}
+
+void AMidnightTaskCharacter::EKeyPressed()
+{
+	if (CombatState != ECombatState::ECS_Unoccupied) return;
+
+	if (TraceHitItem)
+	{
+		GetPickupItem(OverlappingItem);
+		TraceHitItem = nullptr;
+	}
+}
+
+void AMidnightTaskCharacter::EKeyReleased()
+{
 }
 

@@ -65,7 +65,6 @@ bool UTaskCharacterMovementComponent::CanStartClimbing()
 
 		if (HorizontalDegrees <= MinHorizontalDegreesToStartClimbing &&	!bIsCeiling && IsFacingSurface(VerticalDot)) 
 		{
-			if (GEngine) GEngine->AddOnScreenDebugMessage(1, 4, FColor::Green, TEXT("CanStartClimbing"));
 			return true;
 		}
 	}
@@ -285,12 +284,6 @@ bool UTaskCharacterMovementComponent::ShouldStopClimbing()
 {
 
 	const bool bIsOnCeiling = FVector::Parallel(CurrentClimbingNormal, FVector::UpVector);
-
-	if (GEngine) GEngine->AddOnScreenDebugMessage(2, 4, FColor::Red, FString::Printf(TEXT("bWantsToClimb: %d"), !bWantsToClimb));
-	if (GEngine) GEngine->AddOnScreenDebugMessage(3, 4, FColor::Red, FString::Printf(TEXT("CurrentClimbingNormal.IsZero(): %d"), CurrentClimbingNormal.IsZero()));
-	if (GEngine) GEngine->AddOnScreenDebugMessage(4, 4, FColor::Red, FString::Printf(TEXT("bIsOnCeiling: %d"), bIsOnCeiling));
-
-
 
 	return !bWantsToClimb || CurrentClimbingNormal.IsZero() || bIsOnCeiling;
 

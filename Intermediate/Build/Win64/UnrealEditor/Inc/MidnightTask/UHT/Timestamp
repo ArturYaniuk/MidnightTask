@@ -1,2 +1,11 @@
-D:\Files\My_Works\UE works\MidnightTask\Source\MidnightTask\Public\MidnightTaskCharacter.h
+D:\Files\My_Works\UE works\MidnightTask\Source\MidnightTask\Public\Enemy.h
 D:\Files\My_Works\UE works\MidnightTask\Source\MidnightTask\Public\TaskCharacterMovementComponent.h
+D:\Files\My_Works\UE works\MidnightTask\Source\MidnightTask\Public\ActorComponents\AttackComponent.h
+D:\Files\My_Works\UE works\MidnightTask\Source\MidnightTask\Public\ActorComponents\BulletHitInterface.h
+D:\Files\My_Works\UE works\MidnightTask\Source\MidnightTask\Public\MidnightTaskCharacter.h
+D:\Files\My_Works\UE works\MidnightTask\Source\MidnightTask\Public\ActorComponents\HealthComponent.h
+D:\Files\My_Works\UE works\MidnightTask\Source\MidnightTask\Public\ActorComponents\CombatState.h
+D:\Files\My_Works\UE works\MidnightTask\Source\MidnightTask\Public\Items\ItemState.h
+D:\Files\My_Works\UE works\MidnightTask\Source\MidnightTask\Public\Items\Projectile.h
+D:\Files\My_Works\UE works\MidnightTask\Source\MidnightTask\Public\Items\Item.h
+D:\Files\My_Works\UE works\MidnightTask\Source\MidnightTask\Public\Items\Weapon.h

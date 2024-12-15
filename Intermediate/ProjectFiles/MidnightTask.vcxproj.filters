@@ -42,6 +42,9 @@
     <Filter Include="Source\MidnightTask\Private">
       <UniqueIdentifier>{FF120809-087A-32A9-96C4-528541221E4F}</UniqueIdentifier>
     </Filter>
+    <ClCompile Include="..\..\Source\MidnightTask\Private\Enemy.cpp">
+      <Filter>Source\MidnightTask\Private</Filter>
+    </ClCompile>
     <ClCompile Include="..\..\Source\MidnightTask\Private\MidnightTask.cpp">
       <Filter>Source\MidnightTask\Private</Filter>
     </ClCompile>
@@ -51,9 +54,36 @@
     <ClCompile Include="..\..\Source\MidnightTask\Private\TaskCharacterMovementComponent.cpp">
       <Filter>Source\MidnightTask\Private</Filter>
     </ClCompile>
+    <Filter Include="Source\MidnightTask\Private\ActorComponents">
+      <UniqueIdentifier>{1084AB75-8B2B-3B9E-9718-3D9BDDA782E5}</UniqueIdentifier>
+    </Filter>
+    <ClCompile Include="..\..\Source\MidnightTask\Private\ActorComponents\AttackComponent.cpp">
+      <Filter>Source\MidnightTask\Private\ActorComponents</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\Source\MidnightTask\Private\ActorComponents\BulletHitInterface.cpp">
+      <Filter>Source\MidnightTask\Private\ActorComponents</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\Source\MidnightTask\Private\ActorComponents\HealthComponent.cpp">
+      <Filter>Source\MidnightTask\Private\ActorComponents</Filter>
+    </ClCompile>
+    <Filter Include="Source\MidnightTask\Private\Items">
+      <UniqueIdentifier>{78BFEC82-C1D0-3A6C-A9BF-DFA3712D1403}</UniqueIdentifier>
+    </Filter>
+    <ClCompile Include="..\..\Source\MidnightTask\Private\Items\Item.cpp">
+      <Filter>Source\MidnightTask\Private\Items</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\Source\MidnightTask\Private\Items\Projectile.cpp">
+      <Filter>Source\MidnightTask\Private\Items</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\Source\MidnightTask\Private\Items\Weapon.cpp">
+      <Filter>Source\MidnightTask\Private\Items</Filter>
+    </ClCompile>
     <Filter Include="Source\MidnightTask\Public">
       <UniqueIdentifier>{6F789F8D-6253-3D2A-B222-9F8B3D2A2222}</UniqueIdentifier>
     </Filter>
+    <ClCompile Include="..\..\Source\MidnightTask\Public\Enemy.h">
+      <Filter>Source\MidnightTask\Public</Filter>
+    </ClCompile>
     <ClCompile Include="..\..\Source\MidnightTask\Public\MidnightTask.h">
       <Filter>Source\MidnightTask\Public</Filter>
     </ClCompile>
@@ -62,6 +92,36 @@
     </ClCompile>
     <ClCompile Include="..\..\Source\MidnightTask\Public\TaskCharacterMovementComponent.h">
       <Filter>Source\MidnightTask\Public</Filter>
+    </ClCompile>
+    <Filter Include="Source\MidnightTask\Public\ActorComponents">
+      <UniqueIdentifier>{2E98EB81-4669-3D3E-8FBF-06F96FFDBA2E}</UniqueIdentifier>
+    </Filter>
+    <ClCompile Include="..\..\Source\MidnightTask\Public\ActorComponents\AttackComponent.h">
+      <Filter>Source\MidnightTask\Public\ActorComponents</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\Source\MidnightTask\Public\ActorComponents\BulletHitInterface.h">
+      <Filter>Source\MidnightTask\Public\ActorComponents</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\Source\MidnightTask\Public\ActorComponents\CombatState.h">
+      <Filter>Source\MidnightTask\Public\ActorComponents</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\Source\MidnightTask\Public\ActorComponents\HealthComponent.h">
+      <Filter>Source\MidnightTask\Public\ActorComponents</Filter>
+    </ClCompile>
+    <Filter Include="Source\MidnightTask\Public\Items">
+      <UniqueIdentifier>{66BEAFAB-D778-3B0E-A5CE-5AEA785E026A}</UniqueIdentifier>
+    </Filter>
+    <ClCompile Include="..\..\Source\MidnightTask\Public\Items\Item.h">
+      <Filter>Source\MidnightTask\Public\Items</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\Source\MidnightTask\Public\Items\ItemState.h">
+      <Filter>Source\MidnightTask\Public\Items</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\Source\MidnightTask\Public\Items\Projectile.h">
+      <Filter>Source\MidnightTask\Public\Items</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\Source\MidnightTask\Public\Items\Weapon.h">
+      <Filter>Source\MidnightTask\Public\Items</Filter>
     </ClCompile>
   </ItemGroup>
 </Project>
