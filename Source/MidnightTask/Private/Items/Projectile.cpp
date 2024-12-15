@@ -24,7 +24,7 @@ AProjectile::AProjectile() :
 
 	RootComponent = CreateDefaultSubobject<USceneComponent>(TEXT("ProjectileSceneComponent"));
 
-	ProjectileMeshComponent = CreateDefaultSubobject<USkeletalMeshComponent>(TEXT("ProjectileMeshComponent"));
+	ProjectileStaticMeshComponent = CreateDefaultSubobject<UStaticMeshComponent>(TEXT("ProjectileStaticMeshComponent"));
 
 
 	CollisionComponent = CreateDefaultSubobject<UCapsuleComponent>(TEXT("SphereComponent"));
@@ -38,7 +38,7 @@ AProjectile::AProjectile() :
 	RootComponent = CollisionComponent;
 
 	ProjectileMovementComponent = CreateDefaultSubobject<UProjectileMovementComponent>(TEXT("ProjectileMovementComponent"));
-	ProjectileMeshComponent->SetupAttachment(RootComponent);
+	ProjectileStaticMeshComponent->SetupAttachment(RootComponent);
 
 	ProjectileMovementComponent->SetUpdatedComponent(CollisionComponent);
 
@@ -49,6 +49,19 @@ void AProjectile::BeginPlay()
 {
 	Super::BeginPlay();
 	
+	CollisionComponent->InitCapsuleSize(CollisionRadius, CollisionHalfHeight);
+	ProjectileMovementComponent->InitialSpeed = InitialSpeed;
+	ProjectileMovementComponent->MaxSpeed = MaxSpeed;
+	ProjectileMovementComponent->bRotationFollowsVelocity = true;
+	ProjectileMovementComponent->bRotationRemainsVertical = true;
+	ProjectileMovementComponent->bShouldBounce = bShouldBounce;
+	ProjectileMovementComponent->Bounciness = Bounciness;
+	ProjectileMovementComponent->ProjectileGravityScale = GravityScale;
+
+
+
+	// Delete the projectile after 3 seconds.
+	InitialLifeSpan = LifeSpan;
 }
 
 void AProjectile::OnHit(UPrimitiveComponent* HitComponent, AActor* OtherActor, UPrimitiveComponent* OtherComponent, FVector NormalImpulse, const FHitResult& Hit)

@@ -66,9 +66,6 @@
     <Filter Include="Source\MidnightTask\Private\Items">
       <UniqueIdentifier>{78BFEC82-C1D0-3A6C-A9BF-DFA3712D1403}</UniqueIdentifier>
     </Filter>
-    <ClCompile Include="..\..\Source\MidnightTask\Private\Items\BP_Projectile.cpp">
-      <Filter>Source\MidnightTask\Private\Items</Filter>
-    </ClCompile>
     <ClCompile Include="..\..\Source\MidnightTask\Private\Items\Item.cpp">
       <Filter>Source\MidnightTask\Private\Items</Filter>
     </ClCompile>
@@ -108,9 +105,6 @@
     <Filter Include="Source\MidnightTask\Public\Items">
       <UniqueIdentifier>{66BEAFAB-D778-3B0E-A5CE-5AEA785E026A}</UniqueIdentifier>
     </Filter>
-    <ClCompile Include="..\..\Source\MidnightTask\Public\Items\BP_Projectile.h">
-      <Filter>Source\MidnightTask\Public\Items</Filter>
-    </ClCompile>
     <ClCompile Include="..\..\Source\MidnightTask\Public\Items\Item.h">
       <Filter>Source\MidnightTask\Public\Items</Filter>
     </ClCompile>

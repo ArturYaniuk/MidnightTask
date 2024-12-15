@@ -189,6 +189,15 @@ private:
 	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = Combat, meta = (AllowPrivateAccess = "true"))
 	FTransform ClipTransform;
 
+	float CameraDefaultFOV;
+
+	float CameraZoomedFOV;
+
+	float CameraCurrentFOV;
+
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = Camera, meta = (AllowPrivateAccess = "true"))
+	float ZoomInterpSpeed;
+
 protected:
 
 	/** Called for movement input */
@@ -291,7 +300,12 @@ protected:
 
 	UFUNCTION(BlueprintCallable)
 	void ReleaseClip();
+
+	void AimingButtonPressed();
+
+	void AimigButtonReleased();
 	
+	void CameraInterpZoom(float DeltaTime);
 
 public:
 	/** Returns CameraBoom subobject **/

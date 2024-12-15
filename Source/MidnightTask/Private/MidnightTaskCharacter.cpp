@@ -30,7 +30,12 @@ AMidnightTaskCharacter::AMidnightTaskCharacter(const FObjectInitializer& ObjectI
 	bShouldTraceForItems(false),
 	bFireButtonPressed(false),
 	AmmoCapacity(100),
-	OverlappedItemCount(0)
+	OverlappedItemCount(0),
+	bAiming(false),
+	CameraDefaultFOV(90.f),
+	CameraZoomedFOV(60.f),
+	CameraCurrentFOV(0.f),
+	ZoomInterpSpeed(0.f)
 
 {
 	MovementComponent = Cast<UTaskCharacterMovementComponent>(GetCharacterMovement());
@@ -73,6 +78,10 @@ AMidnightTaskCharacter::AMidnightTaskCharacter(const FObjectInitializer& ObjectI
 	FollowCamera = CreateDefaultSubobject<UCameraComponent>(TEXT("FollowCamera"));
 	FollowCamera->SetupAttachment(CameraBoom, USpringArmComponent::SocketName); // Attach the camera to the end of the boom and let the boom adjust to match the controller orientation
 	FollowCamera->bUsePawnControlRotation = false; // Camera does not rotate relative to arm
+
+	bUseControllerRotationPitch = false;
+	bUseControllerRotationYaw = true;
+	bUseControllerRotationRoll = false;
 
 	HandSceneComponent = CreateDefaultSubobject<USceneComponent>(TEXT("HandSceneComp"));
 
@@ -125,6 +134,9 @@ void AMidnightTaskCharacter::SetupPlayerInputComponent(UInputComponent* PlayerIn
 		PlayerInputComponent->BindAction("Attack", IE_Pressed, this, &AMidnightTaskCharacter::FireButtonPressed);
 		PlayerInputComponent->BindAction("Attack", IE_Released, this, &AMidnightTaskCharacter::FireButtonReleased);
 
+		PlayerInputComponent->BindAction("AimingButton", IE_Pressed, this, &AMidnightTaskCharacter::AimingButtonPressed);
+		PlayerInputComponent->BindAction("AimingButton", IE_Released, this, &AMidnightTaskCharacter::AimigButtonReleased);
+
 
 		PlayerInputComponent->BindAction("1Key", IE_Pressed, this, &AMidnightTaskCharacter::OneKeyPressed);
 		PlayerInputComponent->BindAction("2Key", IE_Pressed, this, &AMidnightTaskCharacter::TwoKeyPressed);
@@ -167,6 +179,7 @@ void AMidnightTaskCharacter::Tick(float DeltaSeconds)
 	}
 
 	TraceForItems();
+	CameraInterpZoom(DeltaSeconds);
 
 }
 
@@ -405,11 +418,9 @@ void AMidnightTaskCharacter::FireWeapon()
 	if (WeaponHasAmmo(EquippedWeapon))
 	{
 		PlayFireSound();
-		AttackComponent->SpawnProjectile(
-			EquippedWeapon->GetItemMesh()->GetSocketByName("BarrelSocket"),
-			EquippedWeapon->GetItemMesh(),
-			EquippedWeapon->GetMuzzleFash(),
-			GetViewRotation().Vector());
+		
+
+		AttackComponent->SpawnProjectile(EquippedWeapon->GetItemMesh()->GetSocketByName("BarrelSocket"), EquippedWeapon->GetItemMesh(),	EquippedWeapon->GetMuzzleFash(), GetViewRotation().Vector());
 
 		PlayGunFireMontage();
 		EquippedWeapon->DecrementAmmo();
@@ -613,6 +624,32 @@ void AMidnightTaskCharacter::GrabClip()
 void AMidnightTaskCharacter::ReleaseClip()
 {
 	EquippedWeapon->SetMovingClip(false);
+}
+
+void AMidnightTaskCharacter::AimingButtonPressed()
+{
+	if (CombatState == ECombatState::ECS_Reloading || CombatState == ECombatState::ECS_Equipping) return;
+	bAiming = true;
+	GetCharacterMovement()->MaxWalkSpeed = 300;
+}
+
+void AMidnightTaskCharacter::AimigButtonReleased()
+{
+	bAiming = false;
+	GetCharacterMovement()->MaxWalkSpeed = 500;
+}
+
+void AMidnightTaskCharacter::CameraInterpZoom(float DeltaTime)
+{
+	if (bAiming)
+	{
+		CameraCurrentFOV = FMath::FInterpTo(CameraCurrentFOV, CameraZoomedFOV, DeltaTime, ZoomInterpSpeed);
+	}
+	else
+	{
+		CameraCurrentFOV = FMath::FInterpTo(CameraCurrentFOV, CameraDefaultFOV, DeltaTime, ZoomInterpSpeed);
+	}
+	GetFollowCamera()->SetFieldOfView(CameraCurrentFOV);
 }
 
 void AMidnightTaskCharacter::IncrementOverlappedItemCount(int8 Amount)

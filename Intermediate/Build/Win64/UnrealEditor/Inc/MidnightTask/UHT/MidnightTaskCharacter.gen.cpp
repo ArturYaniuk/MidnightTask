@@ -525,6 +525,11 @@ struct Z_Construct_UClass_AMidnightTaskCharacter_Statics
 		{ "Category", "Combat" },
 		{ "ModuleRelativePath", "Public/MidnightTaskCharacter.h" },
 	};
+	static constexpr UECodeGen_Private::FMetaDataPairParam NewProp_ZoomInterpSpeed_MetaData[] = {
+		{ "AllowPrivateAccess", "true" },
+		{ "Category", "Camera" },
+		{ "ModuleRelativePath", "Public/MidnightTaskCharacter.h" },
+	};
 #endif // WITH_METADATA
 	static const UECodeGen_Private::FObjectPropertyParams NewProp_CameraBoom;
 	static const UECodeGen_Private::FObjectPropertyParams NewProp_FollowCamera;
@@ -574,6 +579,7 @@ struct Z_Construct_UClass_AMidnightTaskCharacter_Statics
 	static const UECodeGen_Private::FIntPropertyParams NewProp_AmmoCapacity;
 	static const UECodeGen_Private::FObjectPropertyParams NewProp_HandSceneComponent;
 	static const UECodeGen_Private::FStructPropertyParams NewProp_ClipTransform;
+	static const UECodeGen_Private::FFloatPropertyParams NewProp_ZoomInterpSpeed;
 	static const UECodeGen_Private::FPropertyParamsBase* const PropPointers[];
 	static UObject* (*const DependentSingletons[])();
 	static constexpr FClassFunctionLinkInfo FuncInfo[] = {
@@ -655,6 +661,7 @@ const UECodeGen_Private::FObjectPropertyParams Z_Construct_UClass_AMidnightTaskC
 const UECodeGen_Private::FIntPropertyParams Z_Construct_UClass_AMidnightTaskCharacter_Statics::NewProp_AmmoCapacity = { "AmmoCapacity", nullptr, (EPropertyFlags)0x0040000000000005, UECodeGen_Private::EPropertyGenFlags::Int, RF_Public|RF_Transient|RF_MarkAsNative, nullptr, nullptr, 1, STRUCT_OFFSET(AMidnightTaskCharacter, AmmoCapacity), METADATA_PARAMS(UE_ARRAY_COUNT(NewProp_AmmoCapacity_MetaData), NewProp_AmmoCapacity_MetaData) };
 const UECodeGen_Private::FObjectPropertyParams Z_Construct_UClass_AMidnightTaskCharacter_Statics::NewProp_HandSceneComponent = { "HandSceneComponent", nullptr, (EPropertyFlags)0x00400000000a001d, UECodeGen_Private::EPropertyGenFlags::Object, RF_Public|RF_Transient|RF_MarkAsNative, nullptr, nullptr, 1, STRUCT_OFFSET(AMidnightTaskCharacter, HandSceneComponent), Z_Construct_UClass_USceneComponent_NoRegister, METADATA_PARAMS(UE_ARRAY_COUNT(NewProp_HandSceneComponent_MetaData), NewProp_HandSceneComponent_MetaData) };
 const UECodeGen_Private::FStructPropertyParams Z_Construct_UClass_AMidnightTaskCharacter_Statics::NewProp_ClipTransform = { "ClipTransform", nullptr, (EPropertyFlags)0x0040000000020015, UECodeGen_Private::EPropertyGenFlags::Struct, RF_Public|RF_Transient|RF_MarkAsNative, nullptr, nullptr, 1, STRUCT_OFFSET(AMidnightTaskCharacter, ClipTransform), Z_Construct_UScriptStruct_FTransform, METADATA_PARAMS(UE_ARRAY_COUNT(NewProp_ClipTransform_MetaData), NewProp_ClipTransform_MetaData) };
+const UECodeGen_Private::FFloatPropertyParams Z_Construct_UClass_AMidnightTaskCharacter_Statics::NewProp_ZoomInterpSpeed = { "ZoomInterpSpeed", nullptr, (EPropertyFlags)0x0040000000000005, UECodeGen_Private::EPropertyGenFlags::Float, RF_Public|RF_Transient|RF_MarkAsNative, nullptr, nullptr, 1, STRUCT_OFFSET(AMidnightTaskCharacter, ZoomInterpSpeed), METADATA_PARAMS(UE_ARRAY_COUNT(NewProp_ZoomInterpSpeed_MetaData), NewProp_ZoomInterpSpeed_MetaData) };
 const UECodeGen_Private::FPropertyParamsBase* const Z_Construct_UClass_AMidnightTaskCharacter_Statics::PropPointers[] = {
 	(const UECodeGen_Private::FPropertyParamsBase*)&Z_Construct_UClass_AMidnightTaskCharacter_Statics::NewProp_CameraBoom,
 	(const UECodeGen_Private::FPropertyParamsBase*)&Z_Construct_UClass_AMidnightTaskCharacter_Statics::NewProp_FollowCamera,
@@ -698,6 +705,7 @@ const UECodeGen_Private::FPropertyParamsBase* const Z_Construct_UClass_AMidnight
 	(const UECodeGen_Private::FPropertyParamsBase*)&Z_Construct_UClass_AMidnightTaskCharacter_Statics::NewProp_AmmoCapacity,
 	(const UECodeGen_Private::FPropertyParamsBase*)&Z_Construct_UClass_AMidnightTaskCharacter_Statics::NewProp_HandSceneComponent,
 	(const UECodeGen_Private::FPropertyParamsBase*)&Z_Construct_UClass_AMidnightTaskCharacter_Statics::NewProp_ClipTransform,
+	(const UECodeGen_Private::FPropertyParamsBase*)&Z_Construct_UClass_AMidnightTaskCharacter_Statics::NewProp_ZoomInterpSpeed,
 };
 static_assert(UE_ARRAY_COUNT(Z_Construct_UClass_AMidnightTaskCharacter_Statics::PropPointers) < 2048);
 UObject* (*const Z_Construct_UClass_AMidnightTaskCharacter_Statics::DependentSingletons[])() = {
@@ -740,10 +748,10 @@ AMidnightTaskCharacter::~AMidnightTaskCharacter() {}
 struct Z_CompiledInDeferFile_FID_Files_My_Works_UE_works_MidnightTask_Source_MidnightTask_Public_MidnightTaskCharacter_h_Statics
 {
 	static constexpr FClassRegisterCompiledInInfo ClassInfo[] = {
-		{ Z_Construct_UClass_AMidnightTaskCharacter, AMidnightTaskCharacter::StaticClass, TEXT("AMidnightTaskCharacter"), &Z_Registration_Info_UClass_AMidnightTaskCharacter, CONSTRUCT_RELOAD_VERSION_INFO(FClassReloadVersionInfo, sizeof(AMidnightTaskCharacter), 3748892741U) },
+		{ Z_Construct_UClass_AMidnightTaskCharacter, AMidnightTaskCharacter::StaticClass, TEXT("AMidnightTaskCharacter"), &Z_Registration_Info_UClass_AMidnightTaskCharacter, CONSTRUCT_RELOAD_VERSION_INFO(FClassReloadVersionInfo, sizeof(AMidnightTaskCharacter), 1011442473U) },
 	};
 };
-static FRegisterCompiledInInfo Z_CompiledInDeferFile_FID_Files_My_Works_UE_works_MidnightTask_Source_MidnightTask_Public_MidnightTaskCharacter_h_2652100538(TEXT("/Script/MidnightTask"),
+static FRegisterCompiledInInfo Z_CompiledInDeferFile_FID_Files_My_Works_UE_works_MidnightTask_Source_MidnightTask_Public_MidnightTaskCharacter_h_701130375(TEXT("/Script/MidnightTask"),
 	Z_CompiledInDeferFile_FID_Files_My_Works_UE_works_MidnightTask_Source_MidnightTask_Public_MidnightTaskCharacter_h_Statics::ClassInfo, UE_ARRAY_COUNT(Z_CompiledInDeferFile_FID_Files_My_Works_UE_works_MidnightTask_Source_MidnightTask_Public_MidnightTaskCharacter_h_Statics::ClassInfo),
 	nullptr, 0,
 	nullptr, 0);
