@@ -24,11 +24,6 @@ protected:
 
 private:
 
-	UPROPERTY(VisibleAnywhere)
-	class UHealthComponent* HealthComponent;
-
-	UPROPERTY(VisibleAnywhere)
-	class UAttackComponent* AttackComponent;
 
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = Combat, meta = (AllowPrivateAccess = true))
 	class USoundCue* ImpactSound;
@@ -50,5 +45,10 @@ public:
 	virtual float TakeDamage(float DamageAmount, struct FDamageEvent const& DamageEvent, AController* EventInstigator, AActor* DamageCauser) override;
 
 
+	UPROPERTY(VisibleAnywhere, BlueprintReadWrite)
+	class UHealthComponent* HealthComponent;
+
+	UPROPERTY(VisibleAnywhere)
+	class UAttackComponent* AttackComponent;
 
 };

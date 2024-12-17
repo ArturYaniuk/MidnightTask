@@ -320,6 +320,7 @@ protected:
 		const FVector& MuzzleSocketLocation,
 		FHitResult& OutHitResult);
 
+
 public:
 	/** Returns CameraBoom subobject **/
 	FORCEINLINE class USpringArmComponent* GetCameraBoom() const { return CameraBoom; }

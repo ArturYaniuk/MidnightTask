@@ -7,6 +7,7 @@
 #include "HealthComponent.generated.h"
 
 
+
 UCLASS(ClassGroup = (Custom), meta = (BlueprintSpawnableComponent))
 class MIDNIGHTTASK_API UHealthComponent : public UActorComponent
 {
@@ -32,5 +33,6 @@ public:
 
 	void ReceiveDamage(float Damage);
 
+	UFUNCTION(BlueprintCallable)
 	bool IsAlive();
 };
