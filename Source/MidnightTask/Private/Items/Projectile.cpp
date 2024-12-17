@@ -107,35 +107,14 @@ void AProjectile::OnHit(UPrimitiveComponent* HitComponent, AActor* OtherActor, U
 				UDamageType::StaticClass());
 
 		}
-
-
-
-		else
-		{
-			// Spawn default particles
-			if (ImpactParticles)
-			{
-				UNiagaraFunctionLibrary::SpawnSystemAtLocation(
-					GetWorld(),
-					ImpactParticles,
-					Hit.Location,
-					Hit.ImpactPoint.Rotation());
-			}
-		}
-
-		
-
 	}
-	else
+	if (ImpactParticles)
 	{
-		if (ImpactParticles)
-		{
-			UNiagaraFunctionLibrary::SpawnSystemAtLocation(
-				GetWorld(),
-				ImpactParticles,
-				Hit.Location,
-				Hit.ImpactPoint.Rotation());
-		}
+		UNiagaraFunctionLibrary::SpawnSystemAtLocation(
+			GetWorld(),
+			ImpactParticles,
+			Hit.Location,
+			Hit.ImpactPoint.Rotation());
 	}
 	Destroy(true);
 }

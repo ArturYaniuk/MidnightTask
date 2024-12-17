@@ -164,7 +164,6 @@ void AMidnightTaskCharacter::Tick(float DeltaSeconds)
 
 	if (GetCharacterMovement()->IsFalling() && bHoldingJump)
 	{
-		CombatState = ECombatState::ECS_WallRuning;
 		FHitResult HitOutR = CheckWall(true);
 		FHitResult HitOutL = CheckWall(false);
 
@@ -181,7 +180,6 @@ void AMidnightTaskCharacter::Tick(float DeltaSeconds)
 	}
 	else if (bWallRunning)
 	{
-		CombatState = ECombatState::ECS_Unoccupied;
 		ToggleWallRun(false);
 	}
 
@@ -433,7 +431,26 @@ void AMidnightTaskCharacter::FireWeapon()
 		
 		if (EquippedWeapon->GetWeaponIsEnergy())
 		{
-			AttackComponent->SpawnProjectile(EquippedWeapon->GetItemMesh()->GetSocketByName("BarrelSocket"), EquippedWeapon->GetItemMesh(), EquippedWeapon->GetMuzzleFash(), GetViewRotation().Vector());
+			FVector2D ViewportSize{};
+			if (GEngine && GEngine->GameViewport)
+			{
+				GEngine->GameViewport->GetViewportSize(ViewportSize);
+			}
+
+			FVector2D CrosshairLocation(ViewportSize.X / 2.f, ViewportSize.Y / 2.f);
+			FVector CrosshairWorldPosition;
+			FVector CrossHairWorldDirection;
+
+			//Get world position and direction of crosshairs
+
+			bool bScreenToWorld = UGameplayStatics::DeprojectScreenToWorld(
+				UGameplayStatics::GetPlayerController(this, 0),
+				CrosshairLocation,
+				CrosshairWorldPosition,
+				CrossHairWorldDirection);
+
+			if(bScreenToWorld)	AttackComponent->SpawnProjectile(EquippedWeapon->GetItemMesh()->GetSocketByName("BarrelSocket"), EquippedWeapon->GetItemMesh(), EquippedWeapon->GetMuzzleFash(), CrossHairWorldDirection);
+
 		}
 		else
 		{
@@ -646,7 +663,7 @@ void AMidnightTaskCharacter::ReleaseClip()
 
 void AMidnightTaskCharacter::AimingButtonPressed()
 {
-	if (CombatState == ECombatState::ECS_Reloading || CombatState == ECombatState::ECS_Equipping) return;
+	if (CombatState == ECombatState::ECS_Reloading || CombatState == ECombatState::ECS_Equipping || EquippedWeapon == nullptr) return;
 	bAiming = true;
 	GetCharacterMovement()->MaxWalkSpeed = 300;
 }
@@ -712,19 +729,15 @@ void AMidnightTaskCharacter::SendBullet()
 				}
 			}
 
-
-			else
+			// Spawn default particles
+			if (ImpactParticles)
 			{
-				// Spawn default particles
-				if (ImpactParticles)
-				{
-					UNiagaraFunctionLibrary::SpawnSystemAtLocation(
-						GetWorld(),
-						ImpactParticles,
-						BeamHitResult.Location);
-				}
+				UNiagaraFunctionLibrary::SpawnSystemAtLocation(
+					GetWorld(),
+					ImpactParticles,
+					BeamHitResult.Location);
 			}
-
+			
 
 			UParticleSystemComponent* Beam = UGameplayStatics::SpawnEmitterAtLocation(
 				GetWorld(),
@@ -902,6 +915,7 @@ void AMidnightTaskCharacter::ToggleWallRun(bool bEnable)
 		}
 
 		bWallRunning = true;
+		CombatState = ECombatState::ECS_WallRuning;
 	}
 	else
 	{
@@ -912,6 +926,9 @@ void AMidnightTaskCharacter::ToggleWallRun(bool bEnable)
 		PC->PlayerCameraManager->ViewPitchMin = -89.900002;
 
 		bWallRunning = false;
+
+		CombatState = ECombatState::ECS_Unoccupied;
+
 	}
 }
 
